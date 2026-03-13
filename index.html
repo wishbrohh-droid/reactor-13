@@ -1,125 +1,99 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>REACTOR 13</title>
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REACTOR 13</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <!-- BOOT SCREEN -->
-<div id="boot-screen" class="screen active">
-  <div class="boot-content">
-    <div class="boot-logo">
-      <div class="radiation-symbol">☢</div>
-      <h1 class="game-title">REACTOR<span class="title-num">13</span></h1>
-      <div class="subtitle">CLASSIFIED INVESTIGATION UNIT — FILE 1997-R13</div>
-    </div>
-    <div class="boot-text-container">
-      <div id="boot-log" class="boot-log"></div>
-    </div>
-    <button id="start-btn" class="btn-main hidden">[ ENTER FACILITY ]</button>
+<div id="screen-boot" class="screen active">
+  <div class="boot-wrap">
+    <div class="rad-icon">☢</div>
+    <h1 class="logo">REACTOR<span>13</span></h1>
+    <p class="subtitle">CLASSIFIED INVESTIGATION — FILE 1997-R13</p>
+    <div class="boot-log" id="boot-log"></div>
+    <button class="btn-start hidden" id="btn-start">[ ENTER FACILITY ]</button>
   </div>
-  <div class="scanline"></div>
-  <div class="vignette"></div>
+  <div class="scanlines"></div>
 </div>
 
-<!-- MAIN GAME HUD -->
-<div id="game-screen" class="screen hidden">
-  <!-- Top HUD -->
-  <div id="hud-top">
-    <div id="location-name">SECTOR UNKNOWN</div>
-    <div id="signal-meter">
-      <span class="hud-label">SIGNAL:</span>
-      <div class="signal-bars">
-        <div class="bar" id="bar1"></div>
-        <div class="bar" id="bar2"></div>
-        <div class="bar" id="bar3"></div>
-        <div class="bar" id="bar4"></div>
-      </div>
+<!-- GAME SCREEN -->
+<div id="screen-game" class="screen hidden">
+
+  <!-- TOP HUD -->
+  <div id="hud">
+    <div id="hud-room">SECTOR UNKNOWN</div>
+    <div id="hud-center">
+      <span id="hud-mission"></span>
     </div>
-    <div id="battery-display">
-      <span class="hud-label">LIGHT:</span>
+    <div id="hud-right">
+      <span class="hud-lbl">LIGHT</span>
       <div id="battery-bar"><div id="battery-fill"></div></div>
     </div>
   </div>
 
-  <!-- Main viewport -->
-  <div id="viewport">
-    <canvas id="game-canvas"></canvas>
-    <!-- Overlay effects -->
-    <div id="flashlight-overlay"></div>
-    <div id="flicker-overlay"></div>
-    <div id="static-overlay" class="hidden"></div>
-    <div id="blood-vignette"></div>
+  <!-- GAME CANVAS -->
+  <canvas id="gc"></canvas>
 
-    <!-- Entity flash -->
-    <div id="entity-flash" class="hidden">
-      <div id="entity-silhouette"></div>
-    </div>
+  <!-- OVERLAYS -->
+  <div id="overlay-dark"></div>
+  <div id="overlay-flicker"></div>
+  <div id="overlay-vignette"></div>
+  <div id="overlay-flashlight"></div>
 
-    <!-- Security monitor popup -->
-    <div id="security-monitor" class="hidden">
-      <div class="monitor-frame">
-        <div class="monitor-header">SECURITY CAM — SECTOR B-4</div>
-        <div class="monitor-screen">
-          <div id="monitor-content"></div>
-          <div class="monitor-scanline"></div>
-        </div>
-        <div class="monitor-footer">REC ● LIVE FEED</div>
-      </div>
-    </div>
+  <!-- ENTITY SCARE -->
+  <div id="entity-scare" class="hidden">
+    <div id="entity-shape"></div>
   </div>
 
-  <!-- Interaction prompt -->
-  <div id="interact-prompt" class="hidden">
-    <span id="interact-text">[ E ] EXAMINE</span>
-  </div>
+  <!-- INTERACTION PANEL -->
+  <div id="interact-hint" class="hidden">[E] <span id="interact-label">EXAMINE</span></div>
 
-  <!-- Document/log reader -->
-  <div id="doc-reader" class="hidden">
-    <div class="doc-frame">
-      <div class="doc-header">
-        <span id="doc-title">LOG FILE</span>
-        <div class="doc-stamp">CLASSIFIED</div>
-      </div>
-      <div id="doc-content" class="doc-body"></div>
-      <button id="doc-close" class="btn-close">[ CLOSE ]</button>
+  <!-- LOG READER -->
+  <div id="log-panel" class="hidden">
+    <div class="log-inner">
+      <div class="log-title" id="log-title">LOG</div>
+      <div class="log-stamp">CLASSIFIED</div>
+      <div class="log-body" id="log-body"></div>
+      <button class="btn-close" id="btn-close-log">[CLOSE]</button>
     </div>
   </div>
 
-  <!-- Choices panel -->
-  <div id="choices-panel" class="hidden">
-    <div id="choices-text"></div>
-    <div id="choices-btns"></div>
+  <!-- MISSION POPUP -->
+  <div id="mission-popup" class="hidden">
+    <div class="mission-inner">
+      <div class="mission-tag">MISSION UPDATE</div>
+      <div id="mission-popup-text"></div>
+    </div>
   </div>
 
-  <!-- Narrative overlay -->
-  <div id="narrative-overlay" class="hidden">
-    <div id="narrative-text"></div>
+  <!-- CHOICE PANEL -->
+  <div id="choice-panel" class="hidden">
+    <div class="choice-inner">
+      <div id="choice-text"></div>
+      <div id="choice-btns"></div>
+    </div>
   </div>
 
-  <!-- Controls hint -->
-  <div id="controls-hint">
-    <span style="color:var(--amber)">[ CLICK GAME TO CAPTURE MOUSE ]</span> &nbsp;|&nbsp; WASD — MOVE &nbsp;|&nbsp; MOUSE — LOOK &nbsp;|&nbsp; E — INTERACT &nbsp;|&nbsp; F — FLASHLIGHT
-  </div>
+  <!-- CONTROLS -->
+  <div id="controls-bar">WASD — MOVE &nbsp;|&nbsp; E — INTERACT &nbsp;|&nbsp; F — FLASHLIGHT</div>
 
-  <div class="scanline"></div>
-  <div class="vignette"></div>
+  <div class="scanlines"></div>
 </div>
 
-<!-- ENDING SCREENS -->
-<div id="ending-screen" class="screen hidden">
-  <div class="ending-content">
-    <div id="ending-radiation" class="radiation-symbol ending-rad">☢</div>
-    <h2 id="ending-title"></h2>
-    <div id="ending-text" class="ending-body"></div>
-    <div id="ending-credits"></div>
-    <button id="restart-btn" class="btn-main">[ RESTART INVESTIGATION ]</button>
+<!-- ENDING SCREEN -->
+<div id="screen-end" class="screen hidden">
+  <div class="end-wrap">
+    <div class="rad-icon end-rad">☢</div>
+    <h2 id="end-title"></h2>
+    <div id="end-text"></div>
+    <div id="end-tag"></div>
+    <button class="btn-start" id="btn-restart">[RESTART INVESTIGATION]</button>
   </div>
-  <div class="scanline"></div>
-  <div class="vignette"></div>
+  <div class="scanlines"></div>
 </div>
 
 <script src="script.js"></script>
