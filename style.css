@@ -270,16 +270,16 @@ body {
   pointer-events: none;
   z-index: 10;
   background: radial-gradient(
-    ellipse 35% 25% at 50% 55%,
+    ellipse 55% 40% at 50% 52%,
     transparent 0%,
-    transparent 30%,
-    rgba(0,0,0,0.55) 60%,
-    rgba(0,0,0,0.93) 100%
+    transparent 35%,
+    rgba(0,0,0,0.35) 65%,
+    rgba(0,0,0,0.78) 100%
   );
   transition: background 0.4s;
 }
 #flashlight-overlay.off {
-  background: rgba(0,0,0,0.97);
+  background: rgba(0,0,0,0.96);
 }
 
 /* Flicker */
