@@ -1,101 +1,218 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>REACTOR 13</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>REACTOR-13</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-<!-- BOOT SCREEN -->
-<div id="screen-boot" class="screen active">
-  <div class="boot-wrap">
-    <div class="rad-icon">☢</div>
-    <h1 class="logo">REACTOR<span>13</span></h1>
-    <p class="subtitle">CLASSIFIED INVESTIGATION — FILE 1997-R13</p>
-    <div class="boot-log" id="boot-log"></div>
-    <button class="btn-start hidden" id="btn-start">[ ENTER FACILITY ]</button>
+<!-- ═══════════════════════════════════════════════════════
+     BOOT / TITLE SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="screen-title" class="screen active">
+  <div class="title-bg-grid"></div>
+  <div class="title-content">
+    <div class="title-rad-wrap">
+      <span class="title-rad">☢</span>
+      <div class="title-rad-ring"></div>
+      <div class="title-rad-ring ring2"></div>
+    </div>
+    <h1 class="title-logo">REACTOR<span class="logo-num">13</span></h1>
+    <p class="title-sub">CLASSIFIED INVESTIGATION — FILE 1997-R13</p>
+    <div class="title-boot-log" id="boot-log"></div>
+    <button class="btn-primary hidden" id="btn-start">[ ENTER FACILITY ]</button>
+    <div class="title-footer">
+      <span>WASD — MOVE</span>
+      <span>MOUSE — LOOK</span>
+      <span>E — INTERACT</span>
+      <span>F — FLASHLIGHT</span>
+      <span>ESC — PAUSE</span>
+    </div>
   </div>
   <div class="scanlines"></div>
 </div>
 
-<!-- GAME SCREEN -->
-<div id="screen-game" class="screen hidden">
+<!-- ═══════════════════════════════════════════════════════
+     POINTER LOCK / CLICK TO PLAY OVERLAY
+═══════════════════════════════════════════════════════ -->
+<div id="screen-pointer" class="screen hidden">
+  <div class="pointer-content">
+    <div class="pointer-rad">☢</div>
+    <p class="pointer-text">CLICK TO RESUME INVESTIGATION</p>
+    <p class="pointer-sub">Mouse will be captured for look controls</p>
+  </div>
+  <div class="scanlines"></div>
+</div>
 
-  <!-- TOP HUD -->
-  <div id="hud">
-    <div id="hud-room">SECTOR UNKNOWN</div>
-    <div id="hud-center">
-      <span id="hud-mission"></span>
+<!-- ═══════════════════════════════════════════════════════
+     GAME CANVAS
+═══════════════════════════════════════════════════════ -->
+<canvas id="game-canvas"></canvas>
+
+<!-- ═══════════════════════════════════════════════════════
+     HUD LAYER
+═══════════════════════════════════════════════════════ -->
+<div id="hud" class="hidden">
+
+  <!-- Top bar -->
+  <div id="hud-top">
+    <div id="hud-location">
+      <span class="hud-icon">◈</span>
+      <span id="hud-location-text">SECTOR UNKNOWN</span>
     </div>
-    <div id="hud-right">
+    <div id="hud-center-bar">
+      <div class="hud-signal">
+        <span class="hud-lbl">SIGNAL</span>
+        <div class="signal-bars">
+          <div class="sbar" id="sb1"></div>
+          <div class="sbar" id="sb2"></div>
+          <div class="sbar" id="sb3"></div>
+          <div class="sbar" id="sb4"></div>
+          <div class="sbar" id="sb5"></div>
+        </div>
+      </div>
+    </div>
+    <div id="hud-battery">
       <span class="hud-lbl">LIGHT</span>
-      <div id="battery-bar"><div id="battery-fill"></div></div>
+      <div class="bat-shell">
+        <div class="bat-fill" id="bat-fill"></div>
+        <div class="bat-tip"></div>
+      </div>
+      <span class="bat-pct" id="bat-pct">100%</span>
     </div>
   </div>
 
-  <!-- GAME CANVAS -->
-  <canvas id="gc"></canvas>
+  <!-- Mission objective -->
+  <div id="hud-mission">
+    <div class="mission-label">▶ OBJECTIVE</div>
+    <div id="mission-text">Investigate the facility entrance.</div>
+  </div>
 
-  <!-- OVERLAYS -->
-  <div id="overlay-dark"></div>
-  <div id="overlay-flicker"></div>
+  <!-- Crosshair -->
+  <div id="crosshair">
+    <div class="ch-h"></div>
+    <div class="ch-v"></div>
+    <div class="ch-dot"></div>
+  </div>
+
+  <!-- Interact prompt -->
+  <div id="interact-prompt" class="hidden">
+    <span class="interact-key">E</span>
+    <span id="interact-label">EXAMINE</span>
+  </div>
+
+  <!-- Horror atmosphere overlays -->
   <div id="overlay-vignette"></div>
-  <div id="overlay-flashlight"></div>
+  <div id="overlay-blood"></div>
+  <div id="overlay-flicker"></div>
+  <div id="overlay-static" class="hidden"></div>
+  <div id="overlay-blackout"></div>
 
-  <!-- ENTITY SCARE -->
+  <!-- Entity flash scare -->
   <div id="entity-scare" class="hidden">
-    <div id="entity-shape"></div>
+    <div id="entity-face"></div>
   </div>
 
-  <!-- INTERACTION PANEL -->
-  <div id="interact-hint" class="hidden">[E] <span id="interact-label">EXAMINE</span></div>
+  <!-- Stamina indicator -->
+  <div id="hud-stamina">
+    <div class="sta-lbl">STA</div>
+    <div class="sta-bar-shell"><div id="sta-fill"></div></div>
+  </div>
 
-  <!-- LOG READER -->
-  <div id="log-panel" class="hidden">
-    <div class="log-inner">
-      <div class="log-title" id="log-title">LOG</div>
-      <div class="log-stamp">CLASSIFIED</div>
-      <div class="log-body" id="log-body"></div>
-      <button class="btn-close" id="btn-close-log">[CLOSE]</button>
+  <div class="scanlines half-opacity"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     DOCUMENT READER PANEL
+═══════════════════════════════════════════════════════ -->
+<div id="doc-reader" class="hidden">
+  <div class="doc-frame">
+    <div class="doc-header">
+      <span class="doc-icon">☢</span>
+      <span id="doc-title-text">LOG FILE</span>
+      <div class="doc-stamp">CLASSIFIED</div>
+    </div>
+    <div class="doc-body" id="doc-body-text"></div>
+    <div class="doc-footer">
+      <button class="btn-doc-close" id="btn-doc-close">[ CLOSE — E ]</button>
     </div>
   </div>
-
-  <!-- MISSION POPUP -->
-  <div id="mission-popup" class="hidden">
-    <div class="mission-inner">
-      <div class="mission-tag">MISSION UPDATE</div>
-      <div id="mission-popup-text"></div>
-    </div>
-  </div>
-
-  <!-- CHOICE PANEL -->
-  <div id="choice-panel" class="hidden">
-    <div class="choice-inner">
-      <div id="choice-text"></div>
-      <div id="choice-btns"></div>
-    </div>
-  </div>
-
-  <!-- CONTROLS -->
-  <div id="controls-bar">WASD — MOVE &nbsp;|&nbsp; E — INTERACT &nbsp;|&nbsp; F — FLASHLIGHT</div>
-
   <div class="scanlines"></div>
 </div>
 
-<!-- ENDING SCREEN -->
+<!-- ═══════════════════════════════════════════════════════
+     MISSION NOTIFICATION
+═══════════════════════════════════════════════════════ -->
+<div id="mission-notify" class="hidden">
+  <div class="mn-tag">MISSION UPDATE</div>
+  <div class="mn-title" id="mn-title-text"></div>
+  <div class="mn-obj" id="mn-obj-text"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     FINAL CHOICE PANEL
+═══════════════════════════════════════════════════════ -->
+<div id="choice-panel" class="hidden">
+  <div class="choice-frame">
+    <div class="choice-rad">☢</div>
+    <div class="choice-header">REACTOR CORE — CRITICAL DECISION</div>
+    <div class="choice-body" id="choice-body">
+      You stand at the reactor core. The entity is here.
+      The facility will lose power in minutes.
+      What do you do?
+    </div>
+    <div class="choice-buttons" id="choice-buttons">
+      <button class="choice-btn" id="btn-shutdown">
+        <div class="cbtn-title">[ INITIATE EMERGENCY SHUTDOWN ]</div>
+        <div class="cbtn-sub">Kill the reactor. The entity expires. You escape.</div>
+      </button>
+      <button class="choice-btn choice-btn-bad" id="btn-restart">
+        <div class="cbtn-title">[ RESTART REACTOR CYCLE ]</div>
+        <div class="cbtn-sub">Restore power. The entity grows stronger. The signal continues.</div>
+      </button>
+    </div>
+  </div>
+  <div class="scanlines"></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     ENDING SCREEN
+═══════════════════════════════════════════════════════ -->
 <div id="screen-end" class="screen hidden">
-  <div class="end-wrap">
-    <div class="rad-icon end-rad">☢</div>
-    <h2 id="end-title"></h2>
-    <div id="end-text"></div>
-    <div id="end-tag"></div>
-    <button class="btn-start" id="btn-restart">[RESTART INVESTIGATION]</button>
+  <div class="end-content">
+    <div class="end-rad" id="end-rad">☢</div>
+    <h2 class="end-title" id="end-title">—</h2>
+    <div class="end-text" id="end-text"></div>
+    <div class="end-tag" id="end-tag"></div>
+    <button class="btn-primary" id="btn-play-again">[ INVESTIGATE AGAIN ]</button>
   </div>
   <div class="scanlines"></div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════
+     PAUSE SCREEN
+═══════════════════════════════════════════════════════ -->
+<div id="screen-pause" class="screen hidden">
+  <div class="pause-content">
+    <div class="pause-rad">☢</div>
+    <h2 class="pause-title">PAUSED</h2>
+    <div class="pause-controls">
+      <div class="ctrl-row"><span class="ctrl-key">W A S D</span><span>Move</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">MOUSE</span><span>Look around</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">E</span><span>Interact / Close</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">F</span><span>Toggle flashlight</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">SHIFT</span><span>Sprint</span></div>
+      <div class="ctrl-row"><span class="ctrl-key">ESC</span><span>Pause / Resume</span></div>
+    </div>
+    <button class="btn-primary" id="btn-resume">[ RESUME ]</button>
+  </div>
+  <div class="scanlines"></div>
+</div>
+
+<!-- Three.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="script.js"></script>
 </body>
 </html>
