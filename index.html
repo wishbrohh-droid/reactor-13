@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>REACTOR 13</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- BOOT SCREEN -->
+<div id="boot-screen" class="screen active">
+  <div class="boot-content">
+    <div class="boot-logo">
+      <div class="radiation-symbol">☢</div>
+      <h1 class="game-title">REACTOR<span class="title-num">13</span></h1>
+      <div class="subtitle">CLASSIFIED INVESTIGATION UNIT — FILE 1997-R13</div>
+    </div>
+    <div class="boot-text-container">
+      <div id="boot-log" class="boot-log"></div>
+    </div>
+    <button id="start-btn" class="btn-main hidden">[ ENTER FACILITY ]</button>
+  </div>
+  <div class="scanline"></div>
+  <div class="vignette"></div>
+</div>
+
+<!-- MAIN GAME HUD -->
+<div id="game-screen" class="screen hidden">
+  <!-- Top HUD -->
+  <div id="hud-top">
+    <div id="location-name">SECTOR UNKNOWN</div>
+    <div id="signal-meter">
+      <span class="hud-label">SIGNAL:</span>
+      <div class="signal-bars">
+        <div class="bar" id="bar1"></div>
+        <div class="bar" id="bar2"></div>
+        <div class="bar" id="bar3"></div>
+        <div class="bar" id="bar4"></div>
+      </div>
+    </div>
+    <div id="battery-display">
+      <span class="hud-label">LIGHT:</span>
+      <div id="battery-bar"><div id="battery-fill"></div></div>
+    </div>
+  </div>
+
+  <!-- Main viewport -->
+  <div id="viewport">
+    <canvas id="game-canvas"></canvas>
+    <!-- Overlay effects -->
+    <div id="flashlight-overlay"></div>
+    <div id="flicker-overlay"></div>
+    <div id="static-overlay" class="hidden"></div>
+    <div id="blood-vignette"></div>
+
+    <!-- Entity flash -->
+    <div id="entity-flash" class="hidden">
+      <div id="entity-silhouette"></div>
+    </div>
+
+    <!-- Security monitor popup -->
+    <div id="security-monitor" class="hidden">
+      <div class="monitor-frame">
+        <div class="monitor-header">SECURITY CAM — SECTOR B-4</div>
+        <div class="monitor-screen">
+          <div id="monitor-content"></div>
+          <div class="monitor-scanline"></div>
+        </div>
+        <div class="monitor-footer">REC ● LIVE FEED</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interaction prompt -->
+  <div id="interact-prompt" class="hidden">
+    <span id="interact-text">[ E ] EXAMINE</span>
+  </div>
+
+  <!-- Document/log reader -->
+  <div id="doc-reader" class="hidden">
+    <div class="doc-frame">
+      <div class="doc-header">
+        <span id="doc-title">LOG FILE</span>
+        <div class="doc-stamp">CLASSIFIED</div>
+      </div>
+      <div id="doc-content" class="doc-body"></div>
+      <button id="doc-close" class="btn-close">[ CLOSE ]</button>
+    </div>
+  </div>
+
+  <!-- Choices panel -->
+  <div id="choices-panel" class="hidden">
+    <div id="choices-text"></div>
+    <div id="choices-btns"></div>
+  </div>
+
+  <!-- Narrative overlay -->
+  <div id="narrative-overlay" class="hidden">
+    <div id="narrative-text"></div>
+  </div>
+
+  <!-- Controls hint -->
+  <div id="controls-hint">
+    <span>WASD / ARROWS — MOVE &nbsp;|&nbsp; E — INTERACT &nbsp;|&nbsp; F — FLASHLIGHT</span>
+  </div>
+
+  <div class="scanline"></div>
+  <div class="vignette"></div>
+</div>
+
+<!-- ENDING SCREENS -->
+<div id="ending-screen" class="screen hidden">
+  <div class="ending-content">
+    <div id="ending-radiation" class="radiation-symbol ending-rad">☢</div>
+    <h2 id="ending-title"></h2>
+    <div id="ending-text" class="ending-body"></div>
+    <div id="ending-credits"></div>
+    <button id="restart-btn" class="btn-main">[ RESTART INVESTIGATION ]</button>
+  </div>
+  <div class="scanline"></div>
+  <div class="vignette"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
