@@ -1,6 +1,6 @@
 // ============================================================
-// REACTOR 13 — MAIN GAME SCRIPT
-// Raycasting engine + narrative horror systems
+// REACTOR 13 — MAIN GAME SCRIPT v2
+// Mouse look + bright flashlight + textured walls
 // ============================================================
 
 (function() {
@@ -8,232 +8,111 @@
 
 // ===== AUDIO ENGINE =====
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
-let ctx = null;
+let audioCtx = null;
 
 function initAudio() {
-  if (!ctx) ctx = new AudioCtx();
+  if (!audioCtx) audioCtx = new AudioCtx();
 }
 
-function playTone(freq, type, duration, vol=0.08, delay=0) {
-  if (!ctx) return;
-  const o = ctx.createOscillator();
-  const g = ctx.createGain();
-  o.connect(g); g.connect(ctx.destination);
+function playTone(freq, type, duration, vol, delay) {
+  vol = vol || 0.08; delay = delay || 0;
+  if (!audioCtx) return;
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.connect(g); g.connect(audioCtx.destination);
   o.type = type; o.frequency.value = freq;
-  g.gain.setValueAtTime(0, ctx.currentTime + delay);
-  g.gain.linearRampToValueAtTime(vol, ctx.currentTime + delay + 0.02);
-  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + delay + duration);
-  o.start(ctx.currentTime + delay);
-  o.stop(ctx.currentTime + delay + duration + 0.05);
+  g.gain.setValueAtTime(0, audioCtx.currentTime + delay);
+  g.gain.linearRampToValueAtTime(vol, audioCtx.currentTime + delay + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + delay + duration);
+  o.start(audioCtx.currentTime + delay);
+  o.stop(audioCtx.currentTime + delay + duration + 0.05);
 }
 
-function playNoise(duration, vol=0.04, lowpass=800) {
-  if (!ctx) return;
-  const buf = ctx.createBuffer(1, ctx.sampleRate * duration, ctx.sampleRate);
+function playNoise(duration, vol, lowpass) {
+  vol = vol || 0.04; lowpass = lowpass || 800;
+  if (!audioCtx) return;
+  const buf = audioCtx.createBuffer(1, audioCtx.sampleRate * duration, audioCtx.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
-  const src = ctx.createBufferSource();
+  const src = audioCtx.createBufferSource();
   src.buffer = buf;
-  const filt = ctx.createBiquadFilter();
+  const filt = audioCtx.createBiquadFilter();
   filt.type = 'lowpass'; filt.frequency.value = lowpass;
-  const g = ctx.createGain();
-  g.gain.setValueAtTime(vol, ctx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + duration);
-  src.connect(filt); filt.connect(g); g.connect(ctx.destination);
-  src.start(); src.stop(ctx.currentTime + duration);
+  const g = audioCtx.createGain();
+  g.gain.setValueAtTime(vol, audioCtx.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+  src.connect(filt); filt.connect(g); g.connect(audioCtx.destination);
+  src.start(); src.stop(audioCtx.currentTime + duration);
 }
 
 function playDrone() {
-  if (!ctx) return;
-  [40, 41.5, 80].forEach((f, i) => {
-    const o = ctx.createOscillator();
-    const g = ctx.createGain();
-    o.connect(g); g.connect(ctx.destination);
+  if (!audioCtx) return;
+  [40, 41.5, 80].forEach(function(f, i) {
+    var o = audioCtx.createOscillator();
+    var g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
     o.type = 'sawtooth'; o.frequency.value = f;
     g.gain.value = 0.015 - i * 0.004;
     o.start();
-    setTimeout(() => { g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 3); setTimeout(() => o.stop(), 3100); }, 8000 + Math.random() * 4000);
+    setTimeout(function() {
+      g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3);
+      setTimeout(function() { o.stop(); }, 3100);
+    }, 8000 + Math.random() * 4000);
   });
 }
 
 function playCreak() {
-  if (!ctx) return;
+  if (!audioCtx) return;
   playNoise(0.6 + Math.random() * 0.4, 0.06, 300 + Math.random() * 200);
   playTone(80 + Math.random() * 40, 'triangle', 0.8, 0.04);
 }
-
-function playDoor() {
-  if (!ctx) return;
-  playNoise(0.2, 0.12, 600);
-  playTone(120, 'sawtooth', 0.3, 0.06);
-}
-
 function playHeartbeat() {
-  if (!ctx) return;
+  if (!audioCtx) return;
   playTone(60, 'sine', 0.15, 0.1);
-  setTimeout(() => playTone(55, 'sine', 0.12, 0.07), 150);
+  setTimeout(function() { playTone(55, 'sine', 0.12, 0.07); }, 150);
 }
-
-function playStaticBurst() {
-  if (!ctx) return;
-  playNoise(0.3, 0.15, 3000);
-}
-
-function playFootstep() {
-  if (!ctx) return;
-  playNoise(0.08, 0.05, 200 + Math.random() * 100);
-}
-
+function playStaticBurst() { if (!audioCtx) return; playNoise(0.3, 0.15, 3000); }
+function playFootstep() { if (!audioCtx) return; playNoise(0.08, 0.05, 200 + Math.random() * 100); }
 function playEntitySound() {
-  if (!ctx) return;
-  // Low distorted growl
-  [30, 45, 90].forEach(f => playTone(f, 'sawtooth', 1.5, 0.06));
+  if (!audioCtx) return;
+  [30, 45, 90].forEach(function(f) { playTone(f, 'sawtooth', 1.5, 0.06); });
   playNoise(1.5, 0.08, 200);
 }
-
 function playPickup() {
-  if (!ctx) return;
-  [440, 550, 660].forEach((f, i) => playTone(f, 'sine', 0.2, 0.06, i * 0.08));
+  if (!audioCtx) return;
+  [440, 550, 660].forEach(function(f, i) { playTone(f, 'sine', 0.2, 0.06, i * 0.08); });
 }
 
-// ===== GAME DATA =====
-
-const DOCUMENTS = {
+// ===== DOCUMENTS =====
+var DOCUMENTS = {
   log_entry_1: {
     title: "LOG FILE — DR. VASKOV — 1997.03.12",
-    text: `ENTRY 001 — Day 14 of Experiment HELIX
-
-The organism is responding to the radiation output better than expected.
-It has begun to show signs of autonomous movement within the containment field.
-
-Dr. Petrov believes we are witnessing the birth of a new form of life —
-one that feeds on electromagnetic radiation rather than chemical compounds.
-
-The board has approved Phase 2. We move to direct energy infusion tomorrow.
-
-<em>— Dr. A. Vaskov, Lead Researcher</em>`
+    text: "ENTRY 001 — Day 14 of Experiment HELIX\n\nThe organism is responding to the radiation output better than expected.\nIt has begun to show signs of autonomous movement within the containment field.\n\nDr. Petrov believes we are witnessing the birth of a new form of life —\none that feeds on electromagnetic radiation rather than chemical compounds.\n\nThe board has approved Phase 2. We move to direct energy infusion tomorrow.\n\n<em>— Dr. A. Vaskov, Lead Researcher</em>"
   },
   log_entry_2: {
     title: "LOG FILE — DR. VASKOV — 1997.03.19",
-    text: `ENTRY 008 — Day 21 of Experiment HELIX
-
-<warn>WARNING: Containment field fluctuations detected at 23:40 hours.</warn>
-
-The organism has grown. It now measures approximately 2 meters across.
-More disturbing — it appears to be learning.
-
-It began mimicking the electrical patterns of our monitoring equipment.
-Petrov called it "beautiful". I called it terrifying.
-
-We should halt the experiment. I filed the paperwork.
-The board <warn>rejected my request.</warn>
-
-They don't understand what we've made here.
-
-<em>— Dr. A. Vaskov</em>`
+    text: "ENTRY 008 — Day 21 of Experiment HELIX\n\n<warn>WARNING: Containment field fluctuations detected at 23:40 hours.</warn>\n\nThe organism has grown. It now measures approximately 2 meters across.\nMore disturbing — it appears to be learning.\n\nIt began mimicking the electrical patterns of our monitoring equipment.\nPetrov called it 'beautiful'. I called it terrifying.\n\nWe should halt the experiment. I filed the paperwork.\nThe board <warn>rejected my request.</warn>\n\nThey don't understand what we've made here.\n\n<em>— Dr. A. Vaskov</em>"
   },
   log_entry_3: {
     title: "LOG FILE — DR. MIRONOVA — 1997.03.24",
-    text: `PERSONAL RECORD — 24/03/1997
-
-Vaskov won't stop talking about shutting it down.
-I think he's right, but I'm afraid to say it.
-
-The organism — we started calling it "the Visitor" — it watches us now.
-Not with eyes. It has no eyes. But we feel it tracking us
-through the cameras, through the sensors.
-
-Last night I heard something in the corridor.
-A wet, dragging sound that stopped outside my door.
-
-I checked the security footage.
-
-<warn>The camera in Corridor B-4 had been turned to face the wall.</warn>
-
-Something did that.
-
-<em>— Dr. Y. Mironova</em>`
+    text: "PERSONAL RECORD — 24/03/1997\n\nVaskov won't stop talking about shutting it down.\nI think he's right, but I'm afraid to say it.\n\nThe organism — we started calling it 'the Visitor' — it watches us now.\nNot with eyes. It has no eyes. But we feel it tracking us\nthrough the cameras, through the sensors.\n\nLast night I heard something in the corridor.\nA wet, dragging sound that stopped outside my door.\n\nI checked the security footage.\n\n<warn>The camera in Corridor B-4 had been turned to face the wall.</warn>\n\nSomething did that.\n\n<em>— Dr. Y. Mironova</em>"
   },
   log_entry_4: {
     title: "INCIDENT REPORT — 1997.03.26 — 02:17",
-    text: `<warn>CRITICAL — PRIORITY ALPHA</warn>
-
-Containment field collapsed at 02:17 local time.
-Cause unknown. Backup systems failed to engage.
-
-Personnel accounting:
-  - Dr. Vaskov: MISSING
-  - Dr. Mironova: MISSING
-  - Technician Brov: <warn>DECEASED</warn> (found in Corridor C)
-  - Security Officer Lev: MISSING
-  - 9 additional staff: MISSING
-
-The Visitor is loose in the facility.
-
-Reactor core temperature rising. Backup power holding.
-Government notified. Evacuation order issued.
-
-<warn>DO NOT RETURN TO FACILITY.</warn>
-
-Filed by: Facility Director G. Norin (last known status: EVACUATING)`,
+    text: "<warn>CRITICAL — PRIORITY ALPHA</warn>\n\nContainment field collapsed at 02:17 local time.\nCause unknown. Backup systems failed to engage.\n\nPersonnel accounting:\n  - Dr. Vaskov: MISSING\n  - Dr. Mironova: MISSING\n  - Technician Brov: <warn>DECEASED</warn> (found in Corridor C)\n  - Security Officer Lev: MISSING\n  - 9 additional staff: MISSING\n\nThe Visitor is loose in the facility.\n\nReactor core temperature rising. Backup power holding.\nGovernment notified. Evacuation order issued.\n\n<warn>DO NOT RETURN TO FACILITY.</warn>\n\nFiled by: Facility Director G. Norin (last known status: EVACUATING)"
   },
   log_entry_5: {
     title: "ENCRYPTED MEMO — MINISTRY OF SCIENCE",
-    text: `CLASSIFICATION: SIGMA-BLACK
-
-The Reactor 13 incident is to be treated as a CONTAINMENT SUCCESS.
-Public records will show a fuel rod failure with full evacuation.
-
-The organism designated HELIX-VISITOR remains contained within
-the facility structure. It cannot survive outside the radiation field
-generated by the active reactor.
-
-<warn>THE REACTOR MUST NOT BE SHUT DOWN.</warn>
-
-The organism feeds on it. If the reactor goes offline,
-the organism will exhaust its energy reserves and expire.
-
-However — initial models suggest it may attempt to
-prevent shutdown if it perceives the threat.
-
-The facility is sealed. The signal it is broadcasting
-appears to be an attempt to communicate. Or to call for help.
-
-<warn>Under no circumstances should any investigation team enter.</warn>
-
-— Ministry of Science, Special Projects Division`,
+    text: "CLASSIFICATION: SIGMA-BLACK\n\nThe Reactor 13 incident is to be treated as a CONTAINMENT SUCCESS.\nPublic records will show a fuel rod failure with full evacuation.\n\nThe organism designated HELIX-VISITOR remains contained within\nthe facility structure. It cannot survive outside the radiation field\ngenerated by the active reactor.\n\n<warn>THE REACTOR MUST NOT BE SHUT DOWN.</warn>\n\nThe organism feeds on it. If the reactor goes offline,\nthe organism will exhaust its energy reserves and expire.\n\nHowever — initial models suggest it may attempt to prevent shutdown\nif it perceives the threat.\n\n<warn>Under no circumstances should any investigation team enter.</warn>\n\n— Ministry of Science, Special Projects Division"
   },
   terminal_log: {
     title: "REACTOR CORE TERMINAL — SYSTEM LOG",
-    text: `HELIX EXPERIMENT — STATUS MONITOR
-
-ENTITY STATUS: ████ ACTIVE
-ENERGY CONSUMPTION: 847% above nominal
-CONTAINMENT: <warn>BREACHED — DAY 10,592</warn>
-REACTOR OUTPUT: 23% capacity (minimum viable for containment)
-
-BEHAVIORAL LOG (auto-generated):
-  > Entity continues to monitor all facility systems
-  > Entity has disabled 3 cameras in past 24 hours
-  > Entity appears aware of new biological signatures in facility
-  > <warn>Entity behavior: AGITATED</warn>
-
-SIGNAL BROADCAST: Active since 2024.11.04
-  Contents decoded: Repeating pattern — "I AM ALONE"
-
-SYSTEM NOTE: Reactor offline in T-04:22:11
-  (scheduled fuel depletion)
-
-<warn>IF REACTOR GOES OFFLINE — ENTITY EXPIRES</warn>
-<warn>IF REACTOR IS RESTARTED — ENTITY SURVIVES</warn>
-
-Recommendation: ████████████ [CORRUPTED]`,
+    text: "HELIX EXPERIMENT — STATUS MONITOR\n\nENTITY STATUS: ACTIVE\nENERGY CONSUMPTION: 847% above nominal\nCONTAINMENT: <warn>BREACHED — DAY 10,592</warn>\nREACTOR OUTPUT: 23% capacity\n\nBEHAVIORAL LOG (auto-generated):\n  > Entity continues to monitor all facility systems\n  > Entity has disabled 3 cameras in past 24 hours\n  > Entity appears aware of new biological signatures in facility\n  > <warn>Entity behavior: AGITATED</warn>\n\nSIGNAL BROADCAST: Active since 2024.11.04\n  Contents decoded: Repeating pattern — 'I AM ALONE'\n\nSYSTEM NOTE: Reactor offline in T-04:22:11\n  (scheduled fuel depletion)\n\n<warn>IF REACTOR GOES OFFLINE — ENTITY EXPIRES</warn>\n<warn>IF REACTOR IS RESTARTED — ENTITY SURVIVES</warn>\n\nRecommendation: [CORRUPTED]"
   }
 };
 
-// ===== MAP DESIGN (0=wall, 1=floor, 2=door, 3=interactable) =====
-// 20x20 tile map
-const MAP = [
+// ===== MAP =====
+var MAP = [
   [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
   [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
   [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
@@ -253,224 +132,316 @@ const MAP = [
   [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
   [1,0,0,1,1,1,0,1,1,0,0,1,1,0,1,1,1,0,0,1],
   [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+  [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1]
 ];
 
-// Interactable objects: { x, y, docId, label, used }
-const INTERACTABLES = [
-  { x: 4, y: 4, docId: 'log_entry_1', label: 'EXAMINE TERMINAL', used: false },
-  { x: 12, y: 4, docId: 'log_entry_2', label: 'READ NOTE', used: false },
-  { x: 4, y: 11, docId: 'log_entry_3', label: 'PERSONAL JOURNAL', used: false },
-  { x: 15, y: 11, docId: 'log_entry_4', label: 'INCIDENT REPORT', used: false },
-  { x: 9, y: 15, docId: 'log_entry_5', label: 'ENCRYPTED MEMO', used: false },
-  { x: 10, y: 9,  docId: 'terminal_log', label: 'REACTOR TERMINAL', used: false, isTerminal: true },
+// Wall detail map: "mx,my" -> type
+var WALL_DETAILS = {
+  '3,3':'window','8,3':'window','11,3':'window','14,3':'window',
+  '3,7':'window','16,7':'window','3,10':'window','16,10':'window',
+  '6,3':'door','13,7':'door','5,14':'door','12,14':'door',
+  '4,3':'panel','12,3':'panel','4,11':'panel','15,11':'panel','9,14':'panel',
+  '7,7':'pipe','8,10':'pipe','11,14':'pipe',
+  '3,4':'damage','8,7':'damage','11,10':'damage','16,13':'damage'
+};
+
+var INTERACTABLES = [
+  { x:4,  y:4,  docId:'log_entry_1', label:'EXAMINE TERMINAL', used:false },
+  { x:12, y:4,  docId:'log_entry_2', label:'READ NOTE',        used:false },
+  { x:4,  y:11, docId:'log_entry_3', label:'PERSONAL JOURNAL', used:false },
+  { x:15, y:11, docId:'log_entry_4', label:'INCIDENT REPORT',  used:false },
+  { x:9,  y:15, docId:'log_entry_5', label:'ENCRYPTED MEMO',   used:false },
+  { x:10, y:9,  docId:'terminal_log',label:'REACTOR TERMINAL', used:false, isTerminal:true }
 ];
 
-// Zone names
 function getZoneName(x, y) {
-  if (y < 6) return 'SECTOR A — RESEARCH WING';
+  if (y < 6)  return 'SECTOR A — RESEARCH WING';
   if (y < 12) return 'SECTOR B — CONTROL ROOM';
   if (y < 16) return 'SECTOR C — MAINTENANCE TUNNELS';
   return 'SECTOR D — REACTOR CORE';
 }
 
-// ===== PLAYER STATE =====
-const player = {
+// ===== PLAYER =====
+var player = {
   x: 1.5, y: 1.5,
   angle: 0,
   moveSpeed: 0.04,
-  rotSpeed: 0.035,
   flashlightOn: true,
-  battery: 100,
+  battery: 100
 };
 
-// Key state
-const keys = {};
+var mouseLocked = false;
+var keys = {};
 
 // ===== RAYCASTER =====
-const TILE = 1;
-const FOV = Math.PI / 3; // 60 degrees
-const HALF_FOV = FOV / 2;
-const MAX_DIST = 20;
+var FOV = Math.PI / 3;
+var HALF_FOV = FOV / 2;
+var MAX_DIST = 22;
 
-let canvas, ctx2d, W, H;
+var canvas, ctx2d, W, H;
+var zBuffer;
 
 function initCanvas() {
   canvas = document.getElementById('game-canvas');
   ctx2d = canvas.getContext('2d');
-  resize();
-  window.addEventListener('resize', resize);
+  doResize();
+  window.addEventListener('resize', doResize);
 }
 
-function resize() {
-  W = canvas.width = canvas.offsetWidth;
+function doResize() {
+  W = canvas.width  = canvas.offsetWidth;
   H = canvas.height = canvas.offsetHeight;
+  zBuffer = new Float32Array(W);
 }
 
-// Wall colors (varied for atmosphere)
-function getWallColor(dist, side, mapVal) {
-  let r = 0, g = 30, b = 5;
-  if (mapVal === 1) { r=5; g=20; b=3; }
-  // Darken by distance
-  const shade = Math.max(0, 1 - dist / MAX_DIST);
-  r = Math.floor(r * shade);
-  g = Math.floor(g * shade + 15 * shade);
-  b = Math.floor(b * shade);
-  if (side === 1) { r=Math.floor(r*0.7); g=Math.floor(g*0.7); b=Math.floor(b*0.7); }
-  return `rgb(${r},${g},${b})`;
+// ===== WALL TEXTURE =====
+// Returns r,g,b array [0..255]
+function getWallTexel(texX, brightness, side, detail) {
+  var nx = Math.floor(texX * 64);
+  var grain = ((nx * 17 + 91) % 37) / 37;
+  var r = 55 + grain * 20;
+  var g = 65 + grain * 18;
+  var b = 50 + grain * 15;
+
+  if (detail === 'window') {
+    if (texX > 0.28 && texX < 0.72) {
+      // Dark glass pane
+      r = 18; g = 38; b = 45;
+      // Window frame
+      if (texX < 0.31 || texX > 0.69) { r = 80; g = 78; b = 68; }
+      // Cracked glass lines
+      if (Math.abs(texX - 0.5) < 0.01) { r = 10; g = 25; b = 30; }
+    } else {
+      // Wall beside window — slightly lighter (frame)
+      r += 15; g += 12; b += 10;
+    }
+  } else if (detail === 'door') {
+    // Metal door — warm gray, dented
+    r = 58 + grain * 12; g = 55 + grain * 10; b = 48 + grain * 10;
+    if (texX > 0.47 && texX < 0.53) { r *= 0.35; g *= 0.35; b *= 0.35; } // seam
+    if (texX < 0.07 || texX > 0.93) { r = Math.min(255, r * 1.4); g = Math.min(255, g * 1.4); }
+    // Handle
+    if (texX > 0.56 && texX < 0.60) { r = 90; g = 88; b = 70; }
+    // Dent / damage
+    if (grain > 0.82) { r *= 0.55; g *= 0.55; b *= 0.55; }
+  } else if (detail === 'panel') {
+    r = 32 + grain * 14; g = 48 + grain * 14; b = 32 + grain * 10;
+    // Panel lights
+    if (texX > 0.18 && texX < 0.21) { r = 15;  g = 220; b = 60; }
+    if (texX > 0.38 && texX < 0.41) { r = 220; g = 25;  b = 10; }
+    if (texX > 0.58 && texX < 0.61) { r = 190; g = 150; b = 10; }
+    if (texX > 0.78 && texX < 0.81) { r = 60;  g = 120; b = 220; }
+    // Border
+    if (texX < 0.05 || texX > 0.95) { r = 82; g = 88; b = 72; }
+  } else if (detail === 'pipe') {
+    r = 78 + grain * 16; g = 72 + grain * 12; b = 58 + grain * 10;
+    if (texX < 0.08 || texX > 0.92) { r *= 0.65; g *= 0.65; b *= 0.65; }
+    // Rust
+    if (grain > 0.83) { r = 110 + grain * 35; g = 45; b = 18; }
+    // Bolts
+    if (Math.abs(texX - 0.15) < 0.015 || Math.abs(texX - 0.85) < 0.015) { r = 100; g = 96; b = 80; }
+  } else if (detail === 'damage') {
+    if (grain > 0.55) { r = 20; g = 16; b = 12; }
+    else { r += (grain) * 25; g -= 8; b -= 12; }
+    // Scorch marks
+    if (grain > 0.75) { r = 30; g = 20; b = 15; }
+  } else {
+    // Regular wall — add subtle vertical variation (pipes, cracks)
+    var vg = ((nx * 7 + 53) % 29) / 29;
+    if (vg > 0.92) { r *= 0.7; g *= 0.7; b *= 0.7; } // thin crack
+  }
+
+  if (side === 1) { r *= 0.62; g *= 0.62; b *= 0.62; }
+
+  r = Math.min(255, Math.max(0, Math.floor(r * brightness)));
+  g = Math.min(255, Math.max(0, Math.floor(g * brightness)));
+  b = Math.min(255, Math.max(0, Math.floor(b * brightness)));
+  return [r, g, b];
+}
+
+function getFloorTexel(fx, fy, brightness) {
+  var tx = fx - Math.floor(fx);
+  var ty = fy - Math.floor(fy);
+  var grain = ((Math.floor(fx * 4) * 13 + Math.floor(fy * 4) * 7 + 23) % 41) / 41;
+  var r = 42 + grain * 14;
+  var g = 50 + grain * 12;
+  var b = 38 + grain * 10;
+  // Tile lines
+  if (tx < 0.035 || ty < 0.035) { r *= 0.45; g *= 0.45; b *= 0.45; }
+  // Stains / debris
+  var stain = ((Math.floor(fx * 2) * 31 + Math.floor(fy * 2) * 19) % 97) / 97;
+  if (stain > 0.87) { r = 22; g = 17; b = 15; }
+  r = Math.min(255, Math.max(0, Math.floor(r * brightness)));
+  g = Math.min(255, Math.max(0, Math.floor(g * brightness)));
+  b = Math.min(255, Math.max(0, Math.floor(b * brightness)));
+  return [r, g, b];
 }
 
 function castRay(angle) {
-  let rayX = player.x;
-  let rayY = player.y;
-  const cosA = Math.cos(angle);
-  const sinA = Math.sin(angle);
+  var cosA = Math.cos(angle);
+  var sinA = Math.sin(angle);
+  var mapX = Math.floor(player.x);
+  var mapY = Math.floor(player.y);
+  var deltaDistX = Math.abs(1 / cosA);
+  var deltaDistY = Math.abs(1 / sinA);
+  var stepX, stepY, sideDistX, sideDistY;
+  if (cosA < 0) { stepX = -1; sideDistX = (player.x - mapX) * deltaDistX; }
+  else           { stepX =  1; sideDistX = (mapX + 1 - player.x) * deltaDistX; }
+  if (sinA < 0) { stepY = -1; sideDistY = (player.y - mapY) * deltaDistY; }
+  else           { stepY =  1; sideDistY = (mapY + 1 - player.y) * deltaDistY; }
 
-  let mapX = Math.floor(rayX);
-  let mapY = Math.floor(rayY);
-
-  const deltaDistX = Math.abs(1 / cosA);
-  const deltaDistY = Math.abs(1 / sinA);
-
-  let stepX, stepY, sideDistX, sideDistY;
-
-  if (cosA < 0) { stepX = -1; sideDistX = (rayX - mapX) * deltaDistX; }
-  else { stepX = 1; sideDistX = (mapX + 1 - rayX) * deltaDistX; }
-  if (sinA < 0) { stepY = -1; sideDistY = (rayY - mapY) * deltaDistY; }
-  else { stepY = 1; sideDistY = (mapY + 1 - rayY) * deltaDistY; }
-
-  let side = 0;
-  let dist = 0;
-  let hit = 0;
-
-  for (let i = 0; i < MAX_DIST * 10 && !hit; i++) {
+  var side = 0, hit = 0;
+  for (var i = 0; i < MAX_DIST * 12 && !hit; i++) {
     if (sideDistX < sideDistY) { sideDistX += deltaDistX; mapX += stepX; side = 0; }
-    else { sideDistY += deltaDistY; mapY += stepY; side = 1; }
+    else                       { sideDistY += deltaDistY; mapY += stepY; side = 1; }
     if (mapX < 0 || mapX >= MAP[0].length || mapY < 0 || mapY >= MAP.length) { hit = 1; break; }
     if (MAP[mapY][mapX] === 1) hit = 1;
   }
 
-  if (side === 0) dist = (mapX - rayX + (1 - stepX) / 2) / cosA;
-  else dist = (mapY - rayY + (1 - stepY) / 2) / sinA;
-
-  return { dist: Math.abs(dist), side, mapX, mapY };
+  var perpDist, wallX;
+  if (side === 0) {
+    perpDist = (mapX - player.x + (1 - stepX) / 2) / cosA;
+    wallX = player.y + perpDist * sinA;
+  } else {
+    perpDist = (mapY - player.y + (1 - stepY) / 2) / sinA;
+    wallX = player.x + perpDist * cosA;
+  }
+  wallX -= Math.floor(wallX);
+  return { dist: Math.abs(perpDist), side: side, mapX: mapX, mapY: mapY, wallX: wallX };
 }
 
-let entityVisible = false;
-let entityX = 10, entityY = 10; // Entity position in map
+var entityVisible = false;
+var entityX = 10, entityY = 10;
+var flickerFactor = 1.0;
 
 function render() {
   if (!ctx2d) return;
+  var imgData = ctx2d.createImageData(W, H);
+  var px = imgData.data;
+  var halfH = H * 0.5;
 
-  // Sky
-  const skyGrad = ctx2d.createLinearGradient(0, 0, 0, H / 2);
-  skyGrad.addColorStop(0, '#000500');
-  skyGrad.addColorStop(1, '#010a02');
-  ctx2d.fillStyle = skyGrad;
-  ctx2d.fillRect(0, 0, W, H / 2);
+  for (var col = 0; col < W; col++) {
+    var rayAngle = player.angle - HALF_FOV + (col / W) * FOV;
+    var ray = castRay(rayAngle);
+    var perpDist = Math.max(0.1, ray.dist * Math.cos(rayAngle - player.angle));
+    zBuffer[col] = perpDist;
 
-  // Floor
-  const floorGrad = ctx2d.createLinearGradient(0, H / 2, 0, H);
-  floorGrad.addColorStop(0, '#010a02');
-  floorGrad.addColorStop(1, '#000300');
-  ctx2d.fillStyle = floorGrad;
-  ctx2d.fillRect(0, H / 2, W, H / 2);
+    var wallH = Math.min(H * 3, Math.floor(H / perpDist));
+    var wallTop    = Math.max(0, Math.floor((H - wallH) / 2));
+    var wallBottom = Math.min(H - 1, Math.floor((H + wallH) / 2));
 
-  // Cast rays
-  const numRays = Math.floor(W / 2);
-  for (let col = 0; col < numRays; col++) {
-    const rayAngle = player.angle - HALF_FOV + (col / numRays) * FOV;
-    const ray = castRay(rayAngle);
-    const perpDist = ray.dist * Math.cos(rayAngle - player.angle);
+    // Flashlight cone: wide soft beam centered on screen
+    var centerFrac = 1.0 - Math.abs((col / W) - 0.5) * 2.0;
+    centerFrac = Math.max(0, centerFrac);
+    var distFalloff = Math.max(0, 1.0 - perpDist / 10.0);
+    var cone = player.flashlightOn ? centerFrac * distFalloff : 0;
+    var ambient = player.flashlightOn ? 0.28 : 0.05;
+    var wallBright = Math.min(2.5, (ambient + cone * 1.8)) * flickerFactor;
 
-    const wallH = Math.min(H, Math.floor(H / (perpDist || 0.01)));
-    const top = Math.floor((H - wallH) / 2);
+    var detail = WALL_DETAILS[ray.mapX + ',' + ray.mapY] || null;
 
-    const color = getWallColor(perpDist, ray.side, MAP[ray.mapY]?.[ray.mapX]);
-    ctx2d.fillStyle = color;
-    ctx2d.fillRect(col * 2, top, 2, wallH);
+    // WALL
+    for (var row = wallTop; row <= wallBottom; row++) {
+      var t = getWallTexel(ray.wallX, wallBright, ray.side, detail);
+      var idx = (row * W + col) * 4;
+      px[idx]   = t[0];
+      px[idx+1] = t[1];
+      px[idx+2] = t[2];
+      px[idx+3] = 255;
+    }
 
-    // Floor/ceiling glow for close walls
-    if (perpDist < 3) {
-      ctx2d.fillStyle = `rgba(0, ${Math.floor(40 * (1 - perpDist / 3))}, 10, 0.15)`;
-      ctx2d.fillRect(col * 2, top, 2, wallH);
+    // CEILING
+    for (var row = 0; row < wallTop; row++) {
+      var cBright = Math.max(0, (0.12 + cone * 0.35) * flickerFactor);
+      var cv = Math.floor((28 + Math.random() * 3) * cBright);
+      var cidx = (row * W + col) * 4;
+      px[cidx]   = Math.floor(cv * 0.7);
+      px[cidx+1] = cv;
+      px[cidx+2] = Math.floor(cv * 0.6);
+      px[cidx+3] = 255;
+    }
+
+    // FLOOR
+    for (var row = wallBottom + 1; row < H; row++) {
+      var rowC = row - halfH;
+      if (rowC <= 0) { var fidx = (row * W + col)*4; px[fidx+3]=255; continue; }
+      var floorDist = halfH / rowC;
+      var floorBright = Math.max(0, (0.14 + cone * 0.5 * Math.max(0, 1 - floorDist / 8)) * flickerFactor);
+      var fx = player.x + floorDist * Math.cos(rayAngle);
+      var fy = player.y + floorDist * Math.sin(rayAngle);
+      var f = getFloorTexel(fx, fy, floorBright);
+      var fidx = (row * W + col) * 4;
+      px[fidx]   = f[0];
+      px[fidx+1] = f[1];
+      px[fidx+2] = f[2];
+      px[fidx+3] = 255;
     }
   }
 
-  // Draw interactables as glowing dots in world space
-  INTERACTABLES.forEach(obj => {
-    if (obj.used) return;
-    drawSprite(obj.x + 0.5, obj.y + 0.5, 5, '#00ff41', 0.7);
+  ctx2d.putImageData(imgData, 0, 0);
+
+  // Sprites
+  INTERACTABLES.forEach(function(obj) {
+    if (!obj.used) drawSprite(obj.x + 0.5, obj.y + 0.5, 6, '#00ff88', 0.9, false);
   });
-
-  // Draw entity
   if (entityVisible) {
-    drawSprite(entityX + 0.5, entityY + 0.5, 20, '#ff2200', 0.9, true);
-  }
-
-  // Flashlight beam draw hint
-  if (!player.flashlightOn) {
-    ctx2d.fillStyle = 'rgba(0,0,0,0.6)';
-    ctx2d.fillRect(0, 0, W, H);
+    drawSprite(entityX + 0.5, entityY + 0.5, 18, '#cc1100', 0.85, true);
   }
 }
 
-function drawSprite(wx, wy, size, color, alpha, tall=false) {
-  const dx = wx - player.x;
-  const dy = wy - player.y;
-  const dist = Math.sqrt(dx * dx + dy * dy);
-  if (dist > 10) return;
+function drawSprite(wx, wy, size, color, alpha, tall) {
+  var dx = wx - player.x;
+  var dy = wy - player.y;
+  var dist = Math.sqrt(dx*dx + dy*dy);
+  if (dist > 10 || dist < 0.3) return;
 
-  // Transform to camera space
-  const invDet = 1.0 / (Math.cos(player.angle) * Math.sin(player.angle + Math.PI / 2) -
-                        Math.sin(player.angle) * Math.cos(player.angle + Math.PI / 2));
+  var ca = Math.cos(player.angle);
+  var sa = Math.sin(player.angle);
+  var invDet = 1.0 / (ca * Math.sin(player.angle + Math.PI/2) - sa * Math.cos(player.angle + Math.PI/2));
+  var transformX = invDet * (Math.sin(player.angle + Math.PI/2) * dx - Math.cos(player.angle + Math.PI/2) * dy);
+  var transformY = invDet * (-sa * dx + ca * dy);
+  if (transformY <= 0.2) return;
 
-  const transformX = invDet * (Math.sin(player.angle + Math.PI / 2) * dx - Math.cos(player.angle + Math.PI / 2) * dy);
-  const transformY = invDet * (-Math.sin(player.angle) * dx + Math.cos(player.angle) * dy);
-
-  if (transformY <= 0.1) return; // behind player
-
-  const spriteScreenX = Math.floor((W / 2) * (1 + transformX / transformY));
-  const spriteH = Math.abs(Math.floor(H / transformY));
-  const spriteW = tall ? Math.floor(spriteH / 2.5) : spriteH;
-
-  const startX = spriteScreenX - spriteW / 2;
-  const startY = (H - spriteH) / 2;
+  var screenX = Math.floor((W / 2) * (1 + transformX / transformY));
+  var spriteH = Math.abs(Math.floor(H / transformY));
+  var spriteW = tall ? Math.floor(spriteH / 3) : Math.floor(spriteH * 0.5);
+  var startY  = Math.floor((H - spriteH) / 2);
+  var startX  = screenX - Math.floor(spriteW / 2);
 
   ctx2d.save();
-  ctx2d.globalAlpha = alpha * Math.min(1, 5 / dist);
+  ctx2d.globalAlpha = alpha * Math.min(1, 3.5 / dist);
+  ctx2d.shadowBlur = 22;
+  ctx2d.shadowColor = color;
+
   if (tall) {
-    // Entity silhouette
-    ctx2d.fillStyle = '#000000';
-    ctx2d.fillRect(startX, startY, spriteW, spriteH);
+    ctx2d.fillStyle = '#000';
+    ctx2d.fillRect(startX, startY + Math.floor(spriteH * 0.1), spriteW, Math.floor(spriteH * 0.8));
     ctx2d.fillStyle = color;
-    ctx2d.shadowBlur = 20;
-    ctx2d.shadowColor = color;
-    ctx2d.fillRect(startX + 1, startY + 1, spriteW - 2, 3);
-    ctx2d.fillRect(startX + 1, startY + spriteH - 4, spriteW - 2, 3);
+    ctx2d.shadowBlur = 30;
+    ctx2d.fillRect(startX - 2, startY + Math.floor(spriteH * 0.1), 3, Math.floor(spriteH * 0.8));
+    ctx2d.fillRect(startX + spriteW, startY + Math.floor(spriteH * 0.1), 3, Math.floor(spriteH * 0.8));
   } else {
     ctx2d.fillStyle = color;
-    ctx2d.shadowBlur = 15;
-    ctx2d.shadowColor = color;
     ctx2d.beginPath();
-    ctx2d.arc(spriteScreenX, H / 2, size / transformY, 0, Math.PI * 2);
+    ctx2d.arc(screenX, Math.floor(H / 2), Math.max(2, size / transformY), 0, Math.PI * 2);
     ctx2d.fill();
   }
   ctx2d.restore();
 }
 
 // ===== MOVEMENT =====
-let footstepTimer = 0;
-let moved = false;
+var footstepTimer = 0;
+var moved = false;
 
 function move(dt) {
-  let nx = player.x, ny = player.y;
-  const spd = player.moveSpeed * dt * 60;
-  const rot = player.rotSpeed * dt * 60;
+  if (gameState !== 'playing') return;
+  var nx = player.x, ny = player.y;
+  var spd = player.moveSpeed * dt * 60;
+  var rot = 0.038 * dt * 60;
   moved = false;
 
-  if (keys['ArrowLeft'] || keys['a'] || keys['A']) { player.angle -= rot; }
-  if (keys['ArrowRight'] || keys['d'] || keys['D']) { player.angle += rot; }
+  if (keys['ArrowLeft']  || keys['q'] || keys['Q']) player.angle -= rot;
+  if (keys['ArrowRight'] || keys['ArrowRight']) player.angle += rot;
 
   if (keys['ArrowUp'] || keys['w'] || keys['W']) {
     nx += Math.cos(player.angle) * spd;
@@ -483,271 +454,211 @@ function move(dt) {
     moved = true;
   }
 
-  const margin = 0.25;
-  if (MAP[Math.floor(ny)]?.[Math.floor(nx)] !== 1) {
-    if (MAP[Math.floor(player.y)]?.[Math.floor(nx)] !== 1) player.x = nx;
-    if (MAP[Math.floor(ny)]?.[Math.floor(player.x)] !== 1) player.y = ny;
+  if (MAP[Math.floor(ny)] && MAP[Math.floor(ny)][Math.floor(nx)] !== 1) {
+    if (MAP[Math.floor(player.y)] && MAP[Math.floor(player.y)][Math.floor(nx)] !== 1) player.x = nx;
+    if (MAP[Math.floor(ny)]       && MAP[Math.floor(ny)][Math.floor(player.x)] !== 1) player.y = ny;
   }
 
   if (moved) {
     footstepTimer += dt;
-    if (footstepTimer > 0.4) {
-      playFootstep();
-      footstepTimer = 0;
-    }
+    if (footstepTimer > 0.38) { playFootstep(); footstepTimer = 0; }
   }
+}
+
+// ===== MOUSE LOOK =====
+function setupMouseLook() {
+  canvas.addEventListener('click', function() {
+    if (!mouseLocked && gameState === 'playing') canvas.requestPointerLock();
+  });
+
+  document.addEventListener('pointerlockchange', function() {
+    mouseLocked = document.pointerLockElement === canvas;
+    document.getElementById('controls-hint').innerHTML = mouseLocked
+      ? 'WASD — MOVE &nbsp;|&nbsp; MOUSE — AIM &nbsp;|&nbsp; E — INTERACT &nbsp;|&nbsp; F — FLASHLIGHT &nbsp;|&nbsp; ESC — UNLOCK'
+      : '<span style="color:#ffaa00">[ CLICK GAME WINDOW TO CAPTURE MOUSE ]</span> &nbsp;|&nbsp; WASD — MOVE &nbsp;|&nbsp; E — INTERACT &nbsp;|&nbsp; F — LIGHT';
+  });
+
+  document.addEventListener('mousemove', function(e) {
+    if (!mouseLocked || gameState !== 'playing') return;
+    player.angle += e.movementX * 0.0028;
+  });
 }
 
 // ===== INTERACTABLE DETECTION =====
 function getNearbyInteractable() {
-  const px = Math.floor(player.x), py = Math.floor(player.y);
-  for (const obj of INTERACTABLES) {
+  for (var i = 0; i < INTERACTABLES.length; i++) {
+    var obj = INTERACTABLES[i];
     if (obj.used) continue;
-    const dist = Math.abs(obj.x - player.x) + Math.abs(obj.y - player.y);
-    if (dist < 1.2) return obj;
+    var dx = obj.x + 0.5 - player.x;
+    var dy = obj.y + 0.5 - player.y;
+    if (Math.sqrt(dx*dx + dy*dy) < 1.3) return obj;
   }
   return null;
 }
 
 // ===== GAME STATE =====
-let gameState = 'playing'; // playing | reading | choices | ended
-let docsFound = 0;
-const TOTAL_DOCS = INTERACTABLES.length;
+var gameState = 'playing';
+var logsRead = {};
+var logsReadCount = 0;
+var TOTAL_DOCS = INTERACTABLES.length;
 
-let logsRead = new Set();
-
-// ===== HUD UPDATES =====
+// ===== HUD =====
 function updateHUD() {
   document.getElementById('location-name').textContent = getZoneName(player.x, player.y);
 
-  // Battery
-  if (player.flashlightOn && moved) {
-    player.battery = Math.max(0, player.battery - 0.005);
-  } else if (player.flashlightOn) {
-    player.battery = Math.max(0, player.battery - 0.001);
-  }
-  const fill = document.getElementById('battery-fill');
+  if (player.flashlightOn && moved) player.battery = Math.max(0, player.battery - 0.005);
+  else if (player.flashlightOn)     player.battery = Math.max(0, player.battery - 0.001);
+
+  var fill = document.getElementById('battery-fill');
   fill.style.width = player.battery + '%';
-  if (player.battery < 30) {
-    fill.style.background = '#ffaa00';
-    fill.style.boxShadow = '0 0 6px #ffaa00';
-  }
-  if (player.battery < 10) {
-    fill.style.background = '#ff2200';
-    fill.style.boxShadow = '0 0 6px #ff2200';
-  }
-  if (player.battery === 0) {
-    player.flashlightOn = false;
-  }
+  if (player.battery < 30) { fill.style.background = '#ffaa00'; fill.style.boxShadow = '0 0 6px #ffaa00'; }
+  if (player.battery < 10) { fill.style.background = '#ff2200'; fill.style.boxShadow = '0 0 6px #ff2200'; }
+  if (player.battery <= 0) { player.flashlightOn = false; }
 
-  // Signal (based on docs found)
-  const bars = document.querySelectorAll('.bar');
-  const activeCount = Math.floor((logsRead.size / TOTAL_DOCS) * 4);
-  bars.forEach((b, i) => {
-    b.classList.toggle('active', i < activeCount);
-  });
+  var bars = document.querySelectorAll('.bar');
+  var active = Math.floor((logsReadCount / TOTAL_DOCS) * 4);
+  bars.forEach(function(b, i) { b.classList.toggle('active', i < active); });
 
-  // Flashlight overlay
-  const fo = document.getElementById('flashlight-overlay');
-  if (player.flashlightOn) {
-    fo.classList.remove('off');
-  } else {
-    fo.classList.add('off');
-  }
+  document.getElementById('flashlight-overlay').classList.toggle('off', !player.flashlightOn);
 }
 
 // ===== HORROR EVENTS =====
-let flickerTimer = 0;
-let nextFlickerIn = 8 + Math.random() * 15;
-let entityFlashTimer = 0;
-let nextEntityIn = 30 + Math.random() * 40;
-let monitorTimer = 0;
-let nextMonitorIn = 20 + Math.random() * 30;
-let staticTimer = 0;
-let staticActive = false;
-let bloodVignetteLevel = 0;
+var flickerTimer = 0, nextFlickerIn  = 8 + Math.random() * 15;
+var entityTimer  = 0, nextEntityIn   = 30 + Math.random() * 40;
+var monitorTimer = 0, nextMonitorIn  = 20 + Math.random() * 30;
+var bloodLevel   = 0;
 
-function runHorrorEvents(dt, elapsed) {
-  // Flicker
+function runHorrorEvents(dt) {
   flickerTimer += dt;
   if (flickerTimer > nextFlickerIn) {
-    triggerFlicker();
-    flickerTimer = 0;
+    triggerFlicker(); flickerTimer = 0;
     nextFlickerIn = 6 + Math.random() * 20;
   }
-
-  // Entity appearance
-  entityFlashTimer += dt;
-  if (entityFlashTimer > nextEntityIn && logsRead.size >= 2) {
-    triggerEntityFlash();
-    entityFlashTimer = 0;
+  entityTimer += dt;
+  if (entityTimer > nextEntityIn && logsReadCount >= 2) {
+    triggerEntityFlash(); entityTimer = 0;
     nextEntityIn = 25 + Math.random() * 40;
   }
-
-  // Security monitor
   monitorTimer += dt;
-  if (monitorTimer > nextMonitorIn && logsRead.size >= 1) {
-    triggerSecurityMonitor();
-    monitorTimer = 0;
+  if (monitorTimer > nextMonitorIn && logsReadCount >= 1) {
+    triggerSecurityMonitor(); monitorTimer = 0;
     nextMonitorIn = 20 + Math.random() * 35;
   }
+  var targetBlood = (logsReadCount / TOTAL_DOCS) * 0.5;
+  bloodLevel += (targetBlood - bloodLevel) * dt * 0.5;
+  document.getElementById('blood-vignette').style.opacity = bloodLevel;
 
-  // Blood vignette based on docs found
-  const targetVignette = logsRead.size / TOTAL_DOCS;
-  bloodVignetteLevel += (targetVignette * 0.5 - bloodVignetteLevel) * dt * 0.5;
-  document.getElementById('blood-vignette').style.opacity = bloodVignetteLevel;
-
-  // Entity in 3D world: wander
-  if (logsRead.size >= 3) {
+  if (logsReadCount >= 3) {
     entityVisible = true;
-    // Drift entity
-    const eAngle = Math.random() * Math.PI * 2;
-    const newEX = entityX + Math.cos(eAngle) * 0.005;
-    const newEY = entityY + Math.sin(eAngle) * 0.005;
-    if (MAP[Math.floor(newEY)]?.[Math.floor(newEX)] !== 1) {
+    var eA = Math.random() * Math.PI * 2;
+    var newEX = entityX + Math.cos(eA) * 0.012;
+    var newEY = entityY + Math.sin(eA) * 0.012;
+    if (MAP[Math.floor(newEY)] && MAP[Math.floor(newEY)][Math.floor(newEX)] !== 1) {
       entityX = newEX; entityY = newEY;
     }
   }
 }
 
 function triggerFlicker() {
-  const overlay = document.getElementById('flicker-overlay');
-  overlay.style.opacity = '1';
   playCreak();
-  setTimeout(() => { overlay.style.opacity = '0'; }, 80);
-  setTimeout(() => { overlay.style.opacity = '0.7'; }, 160);
-  setTimeout(() => { overlay.style.opacity = '0'; }, 220);
+  var pattern = [0.1, 0.9, 0.05, 1.0, 0.2, 0.9, 1.0];
+  var i = 0;
+  function step() {
+    if (i >= pattern.length) { flickerFactor = 1.0; return; }
+    flickerFactor = pattern[i++];
+    setTimeout(step, 55 + Math.random() * 45);
+  }
+  step();
 }
 
 function triggerEntityFlash() {
-  playEntitySound();
-  triggerFlicker();
-
-  setTimeout(() => {
-    const flash = document.getElementById('entity-flash');
-    const sil = document.getElementById('entity-silhouette');
+  playEntitySound(); triggerFlicker();
+  setTimeout(function() {
+    var flash = document.getElementById('entity-flash');
+    var sil   = document.getElementById('entity-silhouette');
     flash.classList.remove('hidden');
-    // Reflow to reset animation
-    sil.style.animation = 'none';
-    sil.offsetHeight;
-    sil.style.animation = '';
-
+    sil.style.animation = 'none'; sil.offsetHeight; sil.style.animation = '';
     playHeartbeat();
-    setTimeout(() => {
-      flash.classList.add('hidden');
-    }, 2200);
+    setTimeout(function() { flash.classList.add('hidden'); }, 2200);
   }, 200);
 }
 
-const monitorMessages = [
-  `[NO SIGNAL]
-...
-...
-MOVEMENT DETECTED
-SECTOR B-4
-[FEED LOST]`,
-  `SUBJECT: ████████
-STATUS: ACTIVE
-ENERGY OUTPUT: ████
-THREAT LEVEL: EXTREME`,
-  `...I SEE YOU...`,
-  `RECORDING STARTED 02:41
-[STATIC]
-SOMETHING IN THE HALL
-[STATIC]
-IT KNOWS YOU'RE HERE`,
-  `CORRIDOR C — LIVE
-[FEED CORRUPTED]
-[FEED CORRUPTED]
-SHAPE DETECTED — NON-HUMAN
-[FEED LOST]`,
+var MONITOR_MSGS = [
+  '[NO SIGNAL]\n...\nMOVEMENT DETECTED\nSECTOR B-4\n[FEED LOST]',
+  'ENTITY: ACTIVE\nENERGY: MAXIMUM\nTHREAT: EXTREME',
+  '...I SEE YOU...',
+  'CORRIDOR C — LIVE\n[FEED CORRUPTED]\nNON-HUMAN SHAPE DETECTED',
+  'IT KNOWS\nYOU\'RE HERE'
 ];
 
 function triggerSecurityMonitor() {
   playStaticBurst();
-  const mon = document.getElementById('security-monitor');
-  const content = document.getElementById('monitor-content');
-  const msg = monitorMessages[Math.floor(Math.random() * monitorMessages.length)];
-  content.textContent = msg;
+  document.getElementById('monitor-content').textContent = MONITOR_MSGS[Math.floor(Math.random() * MONITOR_MSGS.length)];
+  var mon = document.getElementById('security-monitor');
   mon.classList.remove('hidden');
-  setTimeout(() => mon.classList.add('hidden'), 3500 + Math.random() * 1000);
+  setTimeout(function() { mon.classList.add('hidden'); }, 3500 + Math.random() * 1000);
 }
 
-// ===== NARRATIVE MESSAGES =====
-let narrativeQueue = [];
-let narrativeShowing = false;
-
-function showNarrative(text, delay=0) {
-  narrativeQueue.push({ text, delay });
-  if (!narrativeShowing) processNarrativeQueue();
+// ===== NARRATIVE =====
+var narrativeQueue = [], narrativeRunning = false;
+function showNarrative(text, delay) {
+  delay = delay || 0;
+  narrativeQueue.push({ text: text, delay: delay });
+  if (!narrativeRunning) processNarrative();
 }
-
-function processNarrativeQueue() {
-  if (!narrativeQueue.length) { narrativeShowing = false; return; }
-  narrativeShowing = true;
-  const { text, delay } = narrativeQueue.shift();
-  setTimeout(() => {
-    const el = document.getElementById('narrative-text');
-    const overlay = document.getElementById('narrative-overlay');
+function processNarrative() {
+  if (!narrativeQueue.length) { narrativeRunning = false; return; }
+  narrativeRunning = true;
+  var item = narrativeQueue.shift();
+  setTimeout(function() {
+    var overlay = document.getElementById('narrative-overlay');
+    var el = document.getElementById('narrative-text');
+    el.textContent = item.text;
+    el.style.animation = 'none'; el.offsetHeight; el.style.animation = '';
     overlay.classList.remove('hidden');
-    el.textContent = text;
-    el.style.animation = 'none';
-    el.offsetHeight;
-    el.style.animation = 'narrativefade 4s forwards';
-    setTimeout(() => {
-      overlay.classList.add('hidden');
-      processNarrativeQueue();
-    }, 4200);
-  }, delay);
+    setTimeout(function() { overlay.classList.add('hidden'); processNarrative(); }, 4300);
+  }, item.delay);
 }
 
-// ===== DOCUMENT READING =====
+// ===== DOCUMENT READER =====
 function openDocument(docId) {
   if (!DOCUMENTS[docId]) return;
   gameState = 'reading';
-  const doc = DOCUMENTS[docId];
-
+  var doc = DOCUMENTS[docId];
   document.getElementById('doc-title').textContent = doc.title;
-  const body = document.getElementById('doc-content');
-
-  // Parse simple markup
-  let html = doc.text
-    .replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    // Restore our tags
-    .replace(/&lt;em&gt;/g, '<span class="doc-em">').replace(/&lt;\/em&gt;/g, '</span>')
-    .replace(/&lt;warn&gt;/g, '<span class="doc-warn">').replace(/&lt;\/warn&gt;/g, '</span>');
-  body.innerHTML = html;
-
+  var html = doc.text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/&lt;em&gt;/g,'<span class="doc-em">').replace(/&lt;\/em&gt;/g,'</span>')
+    .replace(/&lt;warn&gt;/g,'<span class="doc-warn">').replace(/&lt;\/warn&gt;/g,'</span>');
+  document.getElementById('doc-content').innerHTML = html;
   document.getElementById('doc-reader').classList.remove('hidden');
   playPickup();
 
-  if (!logsRead.has(docId)) {
-    logsRead.add(docId);
-    docsFound++;
-
-    // Narrative after reading
-    const narratives = {
-      log_entry_1: "The experiment began with hope. Someone wanted to create life from radiation.",
-      log_entry_2: "The organism was learning. And the scientists refused to stop.",
-      log_entry_3: "It was watching them. Through the cameras. Through the walls.",
-      log_entry_4: "They all disappeared. In a single night. Only one report was ever filed.",
-      log_entry_5: "The reactor keeps it alive. If it dies — or if you restart what was stopped...",
-      terminal_log: "You understand now. The signal was not a call for help. It was a warning.",
+  if (!logsRead[docId]) {
+    logsRead[docId] = true;
+    logsReadCount++;
+    var narratives = {
+      log_entry_1: 'The experiment began with hope. Someone wanted to create life from radiation.',
+      log_entry_2: 'The organism was learning. And the scientists refused to stop.',
+      log_entry_3: 'It was watching them. Through the cameras. Through the walls.',
+      log_entry_4: 'They all disappeared. In a single night.',
+      log_entry_5: 'The reactor keeps it alive. Shut it down — and the Visitor dies.',
+      terminal_log: 'You understand now. The signal was not a call for help. It was a warning.'
     };
-
     if (narratives[docId]) {
-      document.getElementById('doc-close').addEventListener('click', () => {
+      document.getElementById('doc-close').addEventListener('click', function once() {
         showNarrative(narratives[docId], 500);
-      }, { once: true });
+        document.getElementById('doc-close').removeEventListener('click', once);
+      });
     }
-
-    // Check if terminal found (trigger ending)
     if (docId === 'terminal_log') {
-      document.getElementById('doc-close').addEventListener('click', () => {
+      document.getElementById('doc-close').addEventListener('click', function once2() {
         setTimeout(triggerEnding, 3000);
-      }, { once: true });
+        document.getElementById('doc-close').removeEventListener('click', once2);
+      });
     }
   }
+  if (document.pointerLockElement) document.exitPointerLock();
 }
 
 function closeDocument() {
@@ -755,303 +666,186 @@ function closeDocument() {
   gameState = 'playing';
 }
 
-// ===== ENDING =====
+// ===== ENDINGS =====
 function triggerEnding() {
   gameState = 'choices';
-  triggerFlicker();
-  playEntitySound();
-  setTimeout(() => {
-    const panel = document.getElementById('choices-panel');
+  triggerFlicker(); playEntitySound();
+  setTimeout(function() {
+    var panel = document.getElementById('choices-panel');
     panel.classList.remove('hidden');
-
     document.getElementById('choices-text').textContent =
       'You stand before the reactor control panel.\nThe Visitor stirs in the darkness behind you.\n\nWhat do you do?';
-
-    const btns = document.getElementById('choices-btns');
+    var btns = document.getElementById('choices-btns');
     btns.innerHTML = '';
-
-    const opt1 = document.createElement('button');
-    opt1.className = 'choice-btn';
-    opt1.innerHTML = '[ INITIATE EMERGENCY SHUTDOWN ]\nKill the reactor. Destroy the Visitor. End the signal forever.';
-    opt1.addEventListener('click', () => endGame('shutdown'));
-
-    const opt2 = document.createElement('button');
-    opt2.className = 'choice-btn';
-    opt2.innerHTML = '[ RESTART REACTOR CYCLE ]\nRestore full power. The Visitor survives. The signal continues.';
-    opt2.addEventListener('click', () => endGame('restart'));
-
-    const opt3 = document.createElement('button');
-    opt3.className = 'choice-btn';
-    opt3.innerHTML = '[ DO NOTHING — LEAVE ]\nWalk away. Let time decide what dies here.';
-    opt3.addEventListener('click', () => endGame('leave'));
-
-    btns.appendChild(opt1);
-    btns.appendChild(opt2);
-    btns.appendChild(opt3);
+    [
+      { id:'shutdown', label:'[ INITIATE EMERGENCY SHUTDOWN ]', sub:'Kill the reactor. Destroy the Visitor. End the signal forever.' },
+      { id:'restart',  label:'[ RESTART REACTOR CYCLE ]',        sub:'Restore full power. The Visitor survives. The signal continues.' },
+      { id:'leave',    label:'[ DO NOTHING — LEAVE ]',           sub:'Walk away. Let time decide what dies here.' }
+    ].forEach(function(o) {
+      var btn = document.createElement('button');
+      btn.className = 'choice-btn';
+      btn.innerHTML = o.label + '\n' + o.sub;
+      btn.addEventListener('click', function() { endGame(o.id); });
+      btns.appendChild(btn);
+    });
   }, 1000);
 }
 
-const ENDINGS = {
+var ENDINGS = {
   shutdown: {
     title: 'SILENCE',
-    text: `You enter the emergency shutdown sequence.
-
-The reactor hums, shudders — and dies.
-
-The lights go out. You hear something in the dark.
-A long, falling sound, like a breath being let out for the last time.
-
-Then: nothing.
-
-You make your way out in total darkness, following the wall with your hands.
-Behind you, Reactor 13 is quiet for the first time in almost thirty years.
-
-The Visitor is gone.
-
-You file a report recommending permanent decommissioning.
-The Ministry of Science seals the file under SIGMA-BLACK.
-
-Three months later, you wake from a dream you cannot remember.
-Your skin is warm. The room smells faintly of something electric.
-
-You are probably fine.`,
+    text: 'You enter the emergency shutdown sequence.\n\nThe reactor hums, shudders — and dies.\n\nThe lights go out. You hear something in the dark.\nA long, falling sound, like a breath being let out for the last time.\n\nThen: nothing.\n\nYou make your way out in total darkness, following the wall with your hands.\nBehind you, Reactor 13 is quiet for the first time in almost thirty years.\n\nThe Visitor is gone.\n\nThree months later, you wake from a dream you cannot remember.\nYour skin is warm. The room smells faintly of something electric.\n\nYou are probably fine.',
     credits: 'ENDING: THE LAST BREATH'
   },
   restart: {
     title: 'CONTINUATION',
-    text: `You feed new fuel rods into the reactor core.
-
-The lights return. Somewhere in the facility, something moves.
-
-It does not approach you. It has learned patience.
-
-You leave Reactor 13 exactly as you found it.
-The signal resumes broadcasting the moment you cross the perimeter.
-
-You never tell anyone what you saw.
-You are never entirely sure it was real.
-
-Months later, a second investigation team is sent.
-They too leave with no conclusive findings.
-
-The reactor runs. The Visitor endures.
-
-The signal is still broadcasting today.
-
-<em>I AM ALONE</em>`,
+    text: 'You feed new fuel rods into the reactor core.\n\nThe lights return. Somewhere in the facility, something moves.\n\nIt does not approach you. It has learned patience.\n\nYou leave Reactor 13 exactly as you found it.\nThe signal resumes broadcasting the moment you cross the perimeter.\n\nYou never tell anyone what you saw.\n\nMonths later, a second team is sent.\nThey too leave with no conclusive findings.\n\nThe reactor runs. The Visitor endures.\n\nThe signal is still broadcasting today.\n\n          I AM ALONE',
     credits: 'ENDING: THE SIGNAL PERSISTS'
   },
   leave: {
     title: 'DECAY',
-    text: `You turn away from the console and walk out.
-
-The reactor will exhaust its fuel in approximately four hours.
-When it does, whatever has been living inside Reactor 13
-will have nothing left to feed on.
-
-You drive away as dawn breaks.
-
-The facility falls silent on its own schedule.
-
-No one ever returns. The building is demolished in 2029.
-Construction workers report strange dreams for several weeks.
-
-A small monument is placed at the site.
-The inscription reads only:
-
-<em>"THEY TRIED TO UNDERSTAND."</em>
-
-Whether that was admirable or foolish —
-no one can say.`,
+    text: 'You turn away from the console and walk out.\n\nThe reactor will exhaust its fuel in approximately four hours.\nWhen it does, whatever lives inside Reactor 13 will have nothing left to feed on.\n\nYou drive away as dawn breaks.\n\nThe facility falls silent on its own schedule.\n\nNo one ever returns. The building is demolished in 2029.\nConstruction workers report strange dreams for several weeks.\n\nA small monument is placed at the site.\nThe inscription reads:\n\n          "THEY TRIED TO UNDERSTAND."',
     credits: 'ENDING: THE NATURAL END'
   }
 };
 
-function endGame(endingId) {
+function endGame(id) {
   stopLoop = true;
-  const ending = ENDINGS[endingId];
-
-  const endScreen = document.getElementById('ending-screen');
-  document.getElementById('ending-title').textContent = ending.title;
-
-  // Parse simple markup
-  let html = ending.text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/&lt;em&gt;/g, '<em>').replace(/&lt;\/em&gt;/g, '</em>');
-  document.getElementById('ending-text').innerHTML = html;
-  document.getElementById('ending-credits').textContent = ending.credits;
-
+  var e = ENDINGS[id];
+  document.getElementById('ending-title').textContent = e.title;
+  document.getElementById('ending-text').textContent  = e.text;
+  document.getElementById('ending-credits').textContent = e.credits;
   document.getElementById('choices-panel').classList.add('hidden');
   document.getElementById('game-screen').classList.add('hidden');
-  endScreen.classList.remove('hidden');
-  endScreen.classList.add('active');
-
+  document.getElementById('ending-screen').classList.remove('hidden');
+  document.getElementById('ending-screen').classList.add('active');
+  if (document.pointerLockElement) document.exitPointerLock();
   playDrone();
 }
 
-// ===== BOOT SEQUENCE =====
-const BOOT_LINES = [
-  { text: '> INITIALIZING SYSTEM...', delay: 300, type: '' },
-  { text: '> CLEARANCE LEVEL: ALPHA-7 GRANTED', delay: 700, type: '' },
-  { text: '> LOADING FACILITY MAP... PARTIAL DATA', delay: 1200, type: 'log-warn' },
-  { text: '> GEIGER COUNTER: ONLINE', delay: 1700, type: '' },
-  { text: '> FLASHLIGHT CHARGE: 100%', delay: 2100, type: '' },
-  { text: '> RADIO SIGNAL SOURCE: REACTOR CORE', delay: 2500, type: 'log-warn' },
-  { text: '> WARNING: LAST MAINTENANCE — 10,592 DAYS AGO', delay: 3000, type: 'log-warn' },
-  { text: '> WARNING: LIFE SIGNS DETECTED INSIDE FACILITY', delay: 3500, type: 'log-err' },
-  { text: '> RECOMMENDATION: ABORT MISSION', delay: 4000, type: 'log-err' },
-  { text: '> ORDER OVERRIDE: INVESTIGATE ANYWAY', delay: 4400, type: '' },
-  { text: '> GOOD LUCK, AGENT.', delay: 5000, type: '' },
+// ===== BOOT =====
+var BOOT_LINES = [
+  { text:'> INITIALIZING SYSTEM...',                         delay:300,  type:'' },
+  { text:'> CLEARANCE LEVEL: ALPHA-7 GRANTED',               delay:700,  type:'' },
+  { text:'> LOADING FACILITY MAP... PARTIAL DATA',           delay:1200, type:'log-warn' },
+  { text:'> GEIGER COUNTER: ONLINE',                         delay:1700, type:'' },
+  { text:'> FLASHLIGHT CHARGE: 100%',                        delay:2100, type:'' },
+  { text:'> RADIO SIGNAL SOURCE: REACTOR CORE',              delay:2500, type:'log-warn' },
+  { text:'> WARNING: LAST MAINTENANCE — 10,592 DAYS AGO',    delay:3000, type:'log-warn' },
+  { text:'> WARNING: LIFE SIGNS DETECTED INSIDE FACILITY',   delay:3500, type:'log-err' },
+  { text:'> RECOMMENDATION: ABORT MISSION',                  delay:4000, type:'log-err' },
+  { text:'> ORDER OVERRIDE: INVESTIGATE ANYWAY',             delay:4400, type:'' },
+  { text:'> GOOD LUCK, AGENT.',                              delay:5000, type:'' }
 ];
 
 function runBootSequence() {
-  const log = document.getElementById('boot-log');
-  BOOT_LINES.forEach(({ text, delay, type }) => {
-    setTimeout(() => {
-      const line = document.createElement('div');
-      line.className = 'log-line ' + type;
-      line.textContent = text;
+  var log = document.getElementById('boot-log');
+  BOOT_LINES.forEach(function(item) {
+    setTimeout(function() {
+      var line = document.createElement('div');
+      line.className = 'log-line ' + item.type;
+      line.textContent = item.text;
       log.appendChild(line);
       log.scrollTop = log.scrollHeight;
-    }, delay);
+    }, item.delay);
   });
-
-  setTimeout(() => {
-    document.getElementById('start-btn').classList.remove('hidden');
-  }, 5400);
+  setTimeout(function() { document.getElementById('start-btn').classList.remove('hidden'); }, 5400);
 }
 
 // ===== MAIN LOOP =====
-let stopLoop = false;
-let lastTime = 0;
+var stopLoop = false, lastTime = 0;
 
-function gameLoop(timestamp) {
+function gameLoop(ts) {
   if (stopLoop) return;
-  const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
-  lastTime = timestamp;
-
+  var dt = Math.min((ts - lastTime) / 1000, 0.05);
+  lastTime = ts;
   if (gameState === 'playing') {
     move(dt);
-    runHorrorEvents(dt, timestamp / 1000);
+    runHorrorEvents(dt);
     updateHUD();
     render();
-
-    // Check nearby interactable
-    const near = getNearbyInteractable();
-    const prompt = document.getElementById('interact-prompt');
+    var near = getNearbyInteractable();
+    var prompt = document.getElementById('interact-prompt');
     if (near) {
       prompt.classList.remove('hidden');
-      document.getElementById('interact-text').textContent = `[ E ] ${near.label}`;
+      document.getElementById('interact-text').textContent = '[ E ] ' + near.label;
     } else {
       prompt.classList.add('hidden');
     }
   }
-
   requestAnimationFrame(gameLoop);
 }
 
-// ===== INITIALIZATION =====
+// ===== INIT =====
 function startGame() {
-  initAudio();
-  playDrone();
-
+  initAudio(); playDrone();
   document.getElementById('boot-screen').classList.remove('active');
   document.getElementById('boot-screen').classList.add('hidden');
   document.getElementById('game-screen').classList.remove('hidden');
   document.getElementById('game-screen').classList.add('active');
-
-  initCanvas();
-  gameState = 'playing';
-  stopLoop = false;
-
-  // Opening narration
-  setTimeout(() => showNarrative('1997. A catastrophic experiment. No survivors.'), 1000);
-  setTimeout(() => showNarrative('2026. The signal returns. You are sent to investigate.'), 5500);
-  setTimeout(() => showNarrative('Find out what happened to the researchers. Get out alive.'), 10000);
-
-  setTimeout(() => {
-    triggerFlicker();
-    playCreak();
-  }, 3000);
-
-  requestAnimationFrame((t) => { lastTime = t; requestAnimationFrame(gameLoop); });
+  initCanvas(); setupMouseLook();
+  gameState = 'playing'; stopLoop = false;
+  setTimeout(function() { showNarrative('1997. A catastrophic experiment. No survivors.'); }, 1000);
+  setTimeout(function() { showNarrative('2026. The signal returns. You are sent to investigate.'); }, 5500);
+  setTimeout(function() { showNarrative('Click the game window to enable mouse look.'); }, 10000);
+  setTimeout(function() { triggerFlicker(); playCreak(); }, 3000);
+  requestAnimationFrame(function(t) { lastTime = t; requestAnimationFrame(gameLoop); });
 }
 
 function restartGame() {
-  // Reset state
   player.x = 1.5; player.y = 1.5; player.angle = 0;
   player.flashlightOn = true; player.battery = 100;
-  logsRead.clear(); docsFound = 0;
-  INTERACTABLES.forEach(i => i.used = false);
+  logsRead = {}; logsReadCount = 0;
+  INTERACTABLES.forEach(function(i) { i.used = false; });
   gameState = 'playing'; stopLoop = false;
   entityVisible = false; entityX = 10; entityY = 10;
-  bloodVignetteLevel = 0;
-  flickerTimer = 0; entityFlashTimer = 0; monitorTimer = 0;
+  bloodLevel = 0; flickerFactor = 1.0;
+  flickerTimer = entityTimer = monitorTimer = 0;
   nextFlickerIn = 8 + Math.random() * 15;
-  nextEntityIn = 30 + Math.random() * 40;
+  nextEntityIn  = 30 + Math.random() * 40;
   nextMonitorIn = 20 + Math.random() * 30;
 
-  document.getElementById('battery-fill').style.width = '100%';
-  document.getElementById('battery-fill').style.background = 'var(--green)';
-  document.getElementById('battery-fill').style.boxShadow = '0 0 6px var(--green)';
-  document.getElementById('blood-vignette').style.opacity = '0';
-  document.getElementById('flashlight-overlay').classList.remove('off');
-  document.getElementById('entity-flash').classList.add('hidden');
-  document.getElementById('security-monitor').classList.add('hidden');
-  document.getElementById('doc-reader').classList.add('hidden');
-  document.getElementById('choices-panel').classList.add('hidden');
-  document.getElementById('narrative-overlay').classList.add('hidden');
-  document.getElementById('interact-prompt').classList.add('hidden');
-
+  var fill = document.getElementById('battery-fill');
+  fill.style.width = '100%'; fill.style.background = 'var(--green)'; fill.style.boxShadow = '0 0 6px var(--green)';
+  ['blood-vignette','flashlight-overlay'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (id === 'blood-vignette') el.style.opacity = '0';
+    if (id === 'flashlight-overlay') el.classList.remove('off');
+  });
+  ['entity-flash','security-monitor','doc-reader','choices-panel','narrative-overlay','interact-prompt'].forEach(function(id) {
+    document.getElementById(id).classList.add('hidden');
+  });
   document.getElementById('ending-screen').classList.remove('active');
   document.getElementById('ending-screen').classList.add('hidden');
   document.getElementById('game-screen').classList.remove('hidden');
   document.getElementById('game-screen').classList.add('active');
-
-  resize();
-
-  setTimeout(() => showNarrative('The facility is still here. So is what lives inside.'), 1000);
-  requestAnimationFrame((t) => { lastTime = t; requestAnimationFrame(gameLoop); });
+  doResize();
+  setTimeout(function() { showNarrative('The facility is still here. So is what lives inside.'); }, 1000);
+  requestAnimationFrame(function(t) { lastTime = t; requestAnimationFrame(gameLoop); });
 }
 
-// ===== EVENT LISTENERS =====
-window.addEventListener('keydown', (e) => {
+window.addEventListener('keydown', function(e) {
   keys[e.key] = true;
-
-  if (e.key === 'f' || e.key === 'F') {
-    if (player.battery > 0) {
-      player.flashlightOn = !player.flashlightOn;
-      initAudio();
-    }
-  }
-
-  if (e.key === 'e' || e.key === 'E') {
-    if (gameState === 'reading') {
-      closeDocument();
-      return;
-    }
-    if (gameState === 'playing') {
-      const near = getNearbyInteractable();
-      if (near) {
-        openDocument(near.docId);
-        near.used = true;
-      }
-    }
-  }
-
-  if (e.key === 'Escape' && gameState === 'reading') {
-    closeDocument();
-  }
-
-  // Any key starts audio
   initAudio();
+  if ((e.key === 'f' || e.key === 'F') && gameState === 'playing' && player.battery > 0) {
+    player.flashlightOn = !player.flashlightOn;
+  }
+  if (e.key === 'e' || e.key === 'E') {
+    if (gameState === 'reading') { closeDocument(); return; }
+    if (gameState === 'playing') {
+      var near = getNearbyInteractable();
+      if (near) { openDocument(near.docId); near.used = true; }
+    }
+  }
+  if (e.key === 'Escape') {
+    if (gameState === 'reading') closeDocument();
+    if (mouseLocked) document.exitPointerLock();
+  }
 });
+window.addEventListener('keyup', function(e) { delete keys[e.key]; });
 
-window.addEventListener('keyup', (e) => { keys[e.key] = false; });
-
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function() {
   runBootSequence();
-
   document.getElementById('start-btn').addEventListener('click', startGame);
   document.getElementById('restart-btn').addEventListener('click', restartGame);
   document.getElementById('doc-close').addEventListener('click', closeDocument);
