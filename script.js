@@ -1191,8 +1191,12 @@ function endGame(type){
 }
 
 // ─────────────────────────────────────────────────────────
-//  INPUT
+//  INPUT  — works without a server (no pointer lock required)
+//  Mouse look: hold left mouse button and drag on canvas
 // ─────────────────────────────────────────────────────────
+let mouseDown = false;
+let lastMouseX = 0, lastMouseY = 0;
+
 function setupInput(){
   window.addEventListener('keydown',e=>{
     G.keys[e.code]=true; initAudio();
@@ -1212,28 +1216,50 @@ function setupInput(){
   });
   window.addEventListener('keyup',e=>delete G.keys[e.code]);
 
-  document.addEventListener('mousemove',e=>{
-    if(!G.locked||G.docOpen||G.paused||G.choiceOpen)return;
-    G.yaw-=e.movementX*.0022;
-    G.pitch=Math.max(-1.35,Math.min(1.35,G.pitch-e.movementY*.0022));
-  });
+  // ── MOUSE LOOK — hold left button + drag ──
+  const canvas = document.getElementById('gc');
 
-  document.addEventListener('pointerlockchange',()=>{
-    G.locked=document.pointerLockElement===document.getElementById('gc');
-    const ls=document.getElementById('screen-lock');
-    if(G.locked){ ls.classList.add('hidden'); ls.classList.remove('active'); G.paused=false; }
-    else if(G.running&&!G.ended&&!G.docOpen&&!G.choiceOpen){
-      ls.classList.remove('hidden'); ls.classList.add('active');
+  canvas.addEventListener('mousedown', e=>{
+    if(e.button===0 && !G.docOpen && !G.paused && !G.choiceOpen && !G.ended){
+      mouseDown=true;
+      lastMouseX=e.clientX;
+      lastMouseY=e.clientY;
+      canvas.style.cursor='none';
+      initAudio();
     }
   });
+  window.addEventListener('mouseup', e=>{
+    if(e.button===0){ mouseDown=false; canvas.style.cursor='crosshair'; }
+  });
+  window.addEventListener('mousemove', e=>{
+    if(!mouseDown||G.docOpen||G.paused||G.choiceOpen||G.ended) return;
+    const dx = e.clientX - lastMouseX;
+    const dy = e.clientY - lastMouseY;
+    lastMouseX = e.clientX;
+    lastMouseY = e.clientY;
+    G.yaw   -= dx * 0.003;
+    G.pitch  = Math.max(-1.35, Math.min(1.35, G.pitch - dy * 0.003));
+  });
 
-  document.getElementById('screen-lock').addEventListener('click',()=>{
-    document.getElementById('gc').requestPointerLock();
+  // ── Also try pointer lock (works on localhost/https) ──
+  canvas.addEventListener('click', e=>{
+    if(!G.docOpen&&!G.paused&&!G.choiceOpen&&!G.ended){
+      initAudio();
+      try{ canvas.requestPointerLock(); }catch(err){}
+    }
   });
-  document.getElementById('gc').addEventListener('click',()=>{
-    if(!G.locked&&G.running&&!G.docOpen&&!G.choiceOpen&&!G.paused)
-      document.getElementById('gc').requestPointerLock();
+  document.addEventListener('pointerlockchange',()=>{
+    G.locked = document.pointerLockElement === canvas;
   });
+  document.addEventListener('mousemove',e=>{
+    if(!G.locked||G.docOpen||G.paused||G.choiceOpen||G.ended) return;
+    G.yaw   -= e.movementX * 0.0022;
+    G.pitch  = Math.max(-1.35, Math.min(1.35, G.pitch - e.movementY * 0.0022));
+  });
+
+  // ── Hide lock screen immediately — use hold-to-look instead ──
+  const ls = document.getElementById('screen-lock');
+  ls.classList.add('hidden'); ls.classList.remove('active');
 
   document.getElementById('btn-burn').addEventListener('click',()=>endGame('burn'));
   document.getElementById('btn-stay').addEventListener('click',()=>endGame('stay'));
@@ -1251,7 +1277,6 @@ function togglePause(){
     if(document.pointerLockElement)document.exitPointerLock();
   } else {
     ps.classList.remove('active'); ps.classList.add('hidden');
-    document.getElementById('gc').requestPointerLock();
   }
 }
 
@@ -1309,8 +1334,10 @@ function startGame(){
   document.getElementById('screen-title').classList.remove('active');
   document.getElementById('screen-title').classList.add('hidden');
   document.getElementById('hud').classList.remove('hidden');
+
+  // Hide the lock screen — we use hold-click mouse look instead
   const ls=document.getElementById('screen-lock');
-  ls.classList.remove('hidden'); ls.classList.add('active');
+  ls.classList.add('hidden'); ls.classList.remove('active');
 
   initThree(); buildWorld(); setupInput();
 
@@ -1318,7 +1345,8 @@ function startGame(){
   G.running=true; G.clock.start();
 
   setTimeout(()=>{ sndCreak(); doFlicker(3); },2000);
-  setTimeout(()=>showNote('Something about this place feels wrong.'),3000);
+  setTimeout(()=>showNote('HOLD LEFT MOUSE + DRAG to look around. WASD to move. E to interact.'),1000);
+  setTimeout(()=>showNote('Something about this place feels wrong.'),6000);
 
   // Entity arrives after delay
   setTimeout(()=>{ G.ghost.pos.set(-14,0,-2); },12000);
