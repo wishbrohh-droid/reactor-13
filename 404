@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 — Page Not Found | NOVA</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.1/feather.min.js"></script>
+  <style>
+    .page-404 {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 40px 24px;
+      position: relative;
+      z-index: 2;
+    }
+    .err-code {
+      font-family: var(--font-display);
+      font-size: clamp(100px, 20vw, 180px);
+      letter-spacing: 8px;
+      color: transparent;
+      -webkit-text-stroke: 2px rgba(0,229,255,0.4);
+      line-height: 1;
+      margin-bottom: 0;
+    }
+    .err-title {
+      font-family: var(--font-display);
+      font-size: clamp(24px, 5vw, 48px);
+      letter-spacing: 3px;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .err-sub {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 400px;
+      line-height: 1.7;
+      margin-bottom: 40px;
+    }
+    .err-actions {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .countdown {
+      margin-top: 32px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--text-dim);
+      letter-spacing: 1px;
+    }
+    .countdown span { color: var(--neon); }
+  </style>
+</head>
+<body>
+
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+  <div class="noise"></div>
+  <canvas id="particle-canvas"></canvas>
+
+  <div id="page-loader">
+    <div class="loader-logo">NOVA</div>
+    <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- Nav -->
+  <nav class="nav" id="main-nav">
+    <a href="index.html" class="nav-logo">NOV<span>A</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="index.html#gallery">Library</a></li>
+      <li><a href="video.html">Watch</a></li>
+      <li><a href="upload.html">Upload</a></li>
+      <li><a href="admin.html">Dashboard</a></li>
+    </ul>
+    <div class="nav-right">
+      <a href="upload.html" class="btn-nav-upload">
+        <svg data-feather="upload-cloud" width="15" height="15"></svg>
+        Upload
+      </a>
+      <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="mobile-nav" id="mobile-nav">
+    <div class="mobile-nav-backdrop" id="mobile-nav-backdrop"></div>
+    <div class="mobile-nav-drawer">
+      <button class="mobile-nav-close" id="mobile-nav-close">✕</button>
+      <a href="index.html" class="mobile-nav-link">Home</a>
+      <a href="index.html#gallery" class="mobile-nav-link">Library</a>
+      <a href="video.html" class="mobile-nav-link">Watch</a>
+      <a href="upload.html" class="mobile-nav-link">Upload</a>
+      <a href="admin.html" class="mobile-nav-link">Dashboard</a>
+    </div>
+  </div>
+
+  <!-- 404 content -->
+  <div class="page-404 section">
+    <div class="err-code">404</div>
+    <h1 class="err-title">SIGNAL LOST</h1>
+    <p class="err-sub">The page you're looking for drifted into the void. Let's get you back on track.</p>
+    <div class="err-actions">
+      <a href="index.html" class="btn btn-primary">
+        <svg data-feather="home" width="15" height="15"></svg>
+        Back to Home
+      </a>
+      <a href="index.html#gallery" class="btn btn-outline">
+        <svg data-feather="film" width="15" height="15"></svg>
+        Browse Library
+      </a>
+    </div>
+    <div class="countdown">Redirecting to home in <span id="cd">10</span>s</div>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script>
+    // Auto-redirect countdown
+    let seconds = 10;
+    const cdEl  = document.getElementById('cd');
+    const timer = setInterval(() => {
+      seconds--;
+      if (cdEl) cdEl.textContent = seconds;
+      if (seconds <= 0) {
+        clearInterval(timer);
+        window.location.href = 'index.html';
+      }
+    }, 1000);
+  </script>
+</body>
+</html>
