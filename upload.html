@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Upload Video | NOVA</title>
+  <title>Watch — Into the Digital Horizon | NOVA</title>
   <link rel="stylesheet" href="css/style.css" />
   <!-- Feather Icons: NO defer -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.1/feather.min.js"></script>
@@ -22,14 +22,14 @@
 
   <div class="toast-container" id="toast-container"></div>
 
-  <!-- ── NAV ── -->
+  <!-- ── NAV ──────────────────────────────────────────────── -->
   <nav class="nav" id="main-nav">
     <a href="index.html" class="nav-logo">NOV<span>A</span></a>
     <ul class="nav-links">
       <li><a href="index.html">Home</a></li>
       <li><a href="index.html#gallery">Library</a></li>
-      <li><a href="video.html">Watch</a></li>
-      <li><a href="upload.html" class="active">Upload</a></li>
+      <li><a href="video.html" class="active">Watch</a></li>
+      <li><a href="upload.html">Upload</a></li>
       <li><a href="admin.html">Dashboard</a></li>
     </ul>
     <div class="nav-right">
@@ -51,193 +51,174 @@
       <button class="mobile-nav-close" id="mobile-nav-close">✕</button>
       <a href="index.html" class="mobile-nav-link">Home</a>
       <a href="index.html#gallery" class="mobile-nav-link">Library</a>
-      <a href="video.html" class="mobile-nav-link">Watch</a>
-      <a href="upload.html" class="mobile-nav-link active">Upload</a>
+      <a href="video.html" class="mobile-nav-link active">Watch</a>
+      <a href="upload.html" class="mobile-nav-link">Upload</a>
       <a href="admin.html" class="mobile-nav-link">Dashboard</a>
     </div>
   </div>
 
-  <!-- ── UPLOAD PAGE ── -->
-  <div class="upload-page section">
+  <!-- ── PLAYER PAGE ──────────────────────────────────────── -->
+  <div class="player-page section">
     <div class="container">
-      <div class="section-label">Content Management</div>
-      <h1 class="upload-page-title animate-fade-in-up">UPLOAD VIDEO</h1>
-      <p class="upload-page-sub animate-fade-in-up">Share your content with the world. Upload in any format up to 100GB.</p>
+      <!-- Breadcrumb -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:13px;color:var(--text-muted);">
+        <a href="index.html" style="color:var(--neon)">Home</a>
+        <svg data-feather="chevron-right" width="13" height="13"></svg>
+        <a href="index.html#gallery" style="color:var(--text-muted)">Library</a>
+        <svg data-feather="chevron-right" width="13" height="13"></svg>
+        <span>Into the Digital Horizon</span>
+      </div>
 
-      <div class="upload-layout">
+      <div class="player-layout">
 
-        <!-- ── Left: Drop Zone + Preview ── -->
-        <div class="upload-main">
+        <!-- ── Main Player Column ── -->
+        <div class="player-main">
 
-          <!-- Drop Zone -->
-          <div class="drop-zone" id="drop-zone">
-            <input type="file" id="video-file-input" accept="video/*" hidden />
-            <div class="drop-zone-icon">
-              <svg data-feather="upload-cloud" width="32" height="32"></svg>
+          <!-- Video Player -->
+          <div class="player-wrap" id="player-wrap">
+            <div class="player-placeholder" id="player-placeholder">
+              <div class="player-placeholder-icon" id="play-main-btn" title="Play video">▶</div>
+              <div class="player-placeholder-text">Connect your video source to play</div>
             </div>
-            <div class="drop-zone-title">DROP YOUR VIDEO HERE</div>
-            <p class="drop-zone-sub">
-              Drag and drop your video file, or click to browse.<br>
-              Maximum file size: 100GB
-            </p>
-            <button class="btn btn-outline btn-sm" onclick="document.getElementById('video-file-input').click()">
-              <svg data-feather="folder" width="14" height="14"></svg>
-              Browse Files
-            </button>
-            <div class="drop-zone-formats">
-              <span class="format-tag">MP4</span>
-              <span class="format-tag">MOV</span>
-              <span class="format-tag">AVI</span>
-              <span class="format-tag">MKV</span>
-              <span class="format-tag">WebM</span>
-              <span class="format-tag">4K</span>
-              <span class="format-tag">HDR</span>
-            </div>
+            <!-- Actual video element — set src via JS or directly -->
+            <video id="main-video" style="display:none;" controls></video>
           </div>
 
-          <!-- Preview Area (hidden until file selected) -->
-          <div class="upload-preview-area" id="preview-area">
-            <div class="preview-video-wrap">
-              <video id="preview-video" controls></video>
-            </div>
-            <div class="preview-info">
-              <span class="preview-filename" id="preview-filename">video.mp4</span>
-              <div style="display:flex;gap:12px;align-items:center;">
-                <span class="preview-size" id="preview-size">0 MB</span>
-                <button class="btn btn-ghost btn-xs" id="remove-file-btn">
-                  <svg data-feather="x" width="12" height="12"></svg>
-                  Remove
-                </button>
+          <!-- Video Info -->
+          <div class="player-info animate-fade-in">
+            <div class="player-category">Film · Documentary</div>
+            <h1 class="player-title">Into the Digital Horizon — A Cinematic Journey</h1>
+
+            <div class="player-meta-row">
+              <div class="player-meta-item">
+                <svg data-feather="eye" width="14" height="14"></svg>
+                1.2M views
+              </div>
+              <div class="player-meta-item">
+                <svg data-feather="calendar" width="14" height="14"></svg>
+                March 10, 2026
+              </div>
+              <div class="player-meta-item">
+                <svg data-feather="clock" width="14" height="14"></svg>
+                1h 24m 36s
+              </div>
+              <div class="player-meta-item">
+                <svg data-feather="star" width="14" height="14"></svg>
+                9.4 / 10
+              </div>
+              <div class="player-meta-item" style="margin-left:auto;">
+                <span style="background:var(--neon-dim);border:1px solid rgba(0,229,255,0.3);color:var(--neon);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">4K HDR</span>
               </div>
             </div>
-          </div>
 
-          <!-- Upload Progress (shown during simulated upload) -->
-          <div id="upload-progress-section" style="display:none;margin-top:20px;background:var(--bg-glass);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;">
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
-              <div class="status-dot"></div>
-              <span style="font-size:14px;font-weight:500;color:var(--text);" id="upload-stage-label">Uploading…</span>
-            </div>
-            <div class="progress-track" style="height:6px;">
-              <div class="progress-fill" id="main-progress-fill"></div>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-top:10px;">
-              <span style="font-size:12px;color:var(--text-muted);" id="upload-speed">0 MB/s</span>
-              <span style="font-size:12px;color:var(--neon);font-weight:600;" id="upload-pct">0%</span>
-            </div>
-            <!-- Stage indicators -->
-            <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap;" id="stage-indicators">
-              <div class="stage-pill pending" id="stage-upload" data-label="Uploading">
-                <div class="status-dot"></div> Uploading
-              </div>
-              <div class="stage-pill" id="stage-process" data-label="Processing">⚙ Processing</div>
-              <div class="stage-pill" id="stage-optimize" data-label="Optimizing">🎬 Optimizing</div>
-              <div class="stage-pill" id="stage-publish" data-label="Publishing">✓ Publishing</div>
-            </div>
-          </div>
-
-        </div>
-
-        <!-- ── Right: Form ── -->
-        <div>
-          <div class="upload-form-card animate-fade-in">
-            <div class="upload-form-title">Video Details</div>
-
-            <div class="form-group">
-              <label class="form-label">Title *</label>
-              <input type="text" class="form-input" id="video-title" placeholder="Enter a compelling title…" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Description</label>
-              <textarea class="form-textarea" id="video-desc" placeholder="Tell viewers about your video…" rows="4"></textarea>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Category</label>
-              <select class="form-select" id="video-category">
-                <option value="">Select category…</option>
-                <option value="tech">Technology</option>
-                <option value="design">Design</option>
-                <option value="film">Film</option>
-                <option value="music">Music</option>
-                <option value="education">Education</option>
-                <option value="gaming">Gaming</option>
-                <option value="other">Other</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Tags</label>
-              <input type="text" class="form-input" id="video-tags" placeholder="tag1, tag2, tag3…" />
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Visibility</label>
-              <select class="form-select" id="video-visibility">
-                <option value="public">🌐 Public</option>
-                <option value="unlisted">🔗 Unlisted</option>
-                <option value="private">🔒 Private</option>
-              </select>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Quality</label>
-              <select class="form-select" id="video-quality">
-                <option value="4k">4K Ultra HD</option>
-                <option value="1080p">1080p Full HD</option>
-                <option value="720p">720p HD</option>
-                <option value="480p">480p SD</option>
-              </select>
-            </div>
-
-            <div class="divider"></div>
-
-            <!-- Thumbnail upload -->
-            <div class="form-group">
-              <label class="form-label">Custom Thumbnail</label>
-              <input type="file" id="thumb-input" accept="image/*" hidden />
-              <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;" onclick="document.getElementById('thumb-input').click()">
-                <svg data-feather="image" width="14" height="14"></svg>
-                <span id="thumb-btn-label">Upload Thumbnail Image</span>
+            <div class="player-actions">
+              <button class="btn btn-primary btn-sm" id="like-btn">
+                <svg data-feather="heart" width="14" height="14"></svg>
+                <span id="like-count">24.6K</span>
+              </button>
+              <button class="btn btn-ghost btn-sm" id="save-btn">
+                <svg data-feather="bookmark" width="14" height="14"></svg>
+                Save
+              </button>
+              <button class="btn btn-ghost btn-sm" id="share-btn">
+                <svg data-feather="share-2" width="14" height="14"></svg>
+                Share
+              </button>
+              <button class="btn btn-ghost btn-sm">
+                <svg data-feather="download" width="14" height="14"></svg>
+                Download
+              </button>
+              <button class="btn btn-ghost btn-sm">
+                <svg data-feather="flag" width="14" height="14"></svg>
+                Report
               </button>
             </div>
 
-            <!-- Upload button -->
-            <button class="btn btn-primary" style="width:100%;justify-content:center;" id="upload-submit-btn">
-              <svg data-feather="upload-cloud" width="16" height="16"></svg>
-              Publish Video
-            </button>
-
-            <div style="text-align:center;margin-top:12px;">
-              <button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;" id="save-draft-btn">
-                <svg data-feather="save" width="14" height="14"></svg>
-                Save as Draft
-              </button>
+            <div class="player-desc">
+              <strong style="color:var(--text);">About this video</strong><br><br>
+              An immersive cinematic journey through the megacities of the near future. This feature-length documentary explores how architecture, technology, and human culture are merging into something entirely unprecedented.
+              <br><br>
+              Shot across 12 cities on 4 continents in stunning 8K resolution, this film presents a vision of 2075 that is at once terrifying and breathtakingly beautiful.
+              <br><br>
+              <span style="color:var(--text-dim);font-size:13px;">Tags: documentary, future, cities, technology, architecture, 4K, cinematic</span>
             </div>
 
           </div>
+        </div>
 
-          <!-- Tips card -->
-          <div style="margin-top:16px;background:var(--neon-dim);border:1px solid rgba(0,229,255,0.2);border-radius:var(--radius-lg);padding:20px;">
-            <div style="font-size:12px;font-weight:700;letter-spacing:1px;color:var(--neon);margin-bottom:12px;text-transform:uppercase;">Pro Tips</div>
-            <ul style="list-style:none;display:flex;flex-direction:column;gap:8px;">
-              <li style="font-size:13px;color:var(--text-muted);display:flex;gap:8px;align-items:flex-start;">
-                <span style="color:var(--neon);margin-top:1px;">›</span>
-                Use descriptive titles with keywords for better discovery
-              </li>
-              <li style="font-size:13px;color:var(--text-muted);display:flex;gap:8px;align-items:flex-start;">
-                <span style="color:var(--neon);margin-top:1px;">›</span>
-                Upload at the highest quality available
-              </li>
-              <li style="font-size:13px;color:var(--text-muted);display:flex;gap:8px;align-items:flex-start;">
-                <span style="color:var(--neon);margin-top:1px;">›</span>
-                Custom thumbnails increase click-through rate by 30%
-              </li>
-            </ul>
+        <!-- ── Sidebar ── -->
+        <aside>
+          <div class="sidebar-title">Up Next</div>
+
+          <!-- Sidebar Videos -->
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-2">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🤖</div>
+              <div class="sidebar-thumb-duration">32:14</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">AI Consciousness: The Next Frontier</div>
+              <div class="sidebar-video-meta">480K views · Feb 2026</div>
+            </div>
           </div>
 
-        </div>
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-3">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🎨</div>
+              <div class="sidebar-thumb-duration">18:55</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">Mastering Motion: Advanced UI Animation</div>
+              <div class="sidebar-video-meta">220K views · Mar 2026</div>
+            </div>
+          </div>
+
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-4">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🎵</div>
+              <div class="sidebar-thumb-duration">44:20</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">Neon Frequencies — Live Synthwave Performance</div>
+              <div class="sidebar-video-meta">890K views · Jan 2026</div>
+            </div>
+          </div>
+
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-5">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🚀</div>
+              <div class="sidebar-thumb-duration">55:03</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">Space Architecture: Building the Moon Base</div>
+              <div class="sidebar-video-meta">1.6M views · Mar 2026</div>
+            </div>
+          </div>
+
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-6">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🎭</div>
+              <div class="sidebar-thumb-duration">12:48</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">Short Film: The Last Signal from Station Zero</div>
+              <div class="sidebar-video-meta">340K views · Feb 2026</div>
+            </div>
+          </div>
+
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-1">
+              <div class="thumb-placeholder-icon" style="font-size:18px">💡</div>
+              <div class="sidebar-thumb-duration">27:39</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">The Complete Guide to Glassmorphism Design</div>
+              <div class="sidebar-video-meta">510K views · Jan 2026</div>
+            </div>
+          </div>
+
+        </aside>
+
       </div>
     </div>
   </div>
@@ -257,170 +238,58 @@
     </div>
   </footer>
 
-  <style>
-    .stage-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 5px 12px;
-      border-radius: 100px;
-      font-size: 11px;
-      font-weight: 600;
-      background: var(--bg-glass2);
-      border: 1px solid var(--border);
-      color: var(--text-dim);
-      transition: all 0.4s;
-    }
-    .stage-pill.pending {
-      color: var(--neon);
-      background: var(--neon-dim);
-      border-color: rgba(0,229,255,0.3);
-    }
-    .stage-pill.done {
-      color: #30d158;
-      background: rgba(48,209,88,0.1);
-      border-color: rgba(48,209,88,0.3);
-    }
-  </style>
-
   <script src="js/script.js"></script>
   <script>
+    // ── Player page specific interactions ──
     document.addEventListener('DOMContentLoaded', () => {
-      const dropZone   = document.getElementById('drop-zone');
-      const fileInput  = document.getElementById('video-file-input');
-      const previewArea= document.getElementById('preview-area');
-      const previewVid = document.getElementById('preview-video');
-      const previewName= document.getElementById('preview-filename');
-      const previewSize= document.getElementById('preview-size');
-      const removeBtn  = document.getElementById('remove-file-btn');
-      const submitBtn  = document.getElementById('upload-submit-btn');
-      const draftBtn   = document.getElementById('save-draft-btn');
-      const thumbInput = document.getElementById('thumb-input');
-      const thumbLabel = document.getElementById('thumb-btn-label');
-      const progressSection = document.getElementById('upload-progress-section');
+      const placeholder = document.getElementById('player-placeholder');
+      const video       = document.getElementById('main-video');
+      const playBtn     = document.getElementById('play-main-btn');
+      const likeBtn     = document.getElementById('like-btn');
+      const likeCount   = document.getElementById('like-count');
+      const saveBtn     = document.getElementById('save-btn');
+      const shareBtn    = document.getElementById('share-btn');
 
-      let selectedFile = null;
+      let liked = false;
+      let saved = false;
 
-      // ── Format bytes ──
-      function fmtBytes(b) {
-        if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
-        if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
-        return (b / 1073741824).toFixed(2) + ' GB';
-      }
-
-      // ── Handle file selection ──
-      function handleFile(file) {
-        if (!file || !file.type.startsWith('video/')) {
-          showToast('Please select a valid video file.', 'error');
-          return;
-        }
-        selectedFile = file;
-        const url = URL.createObjectURL(file);
-        previewVid.src = url;
-        previewName.textContent = file.name;
-        previewSize.textContent = fmtBytes(file.size);
-        previewArea.classList.add('visible');
-        dropZone.classList.add('has-file');
-        dropZone.style.display = 'none';
-        showToast('✓ Video ready to upload', 'success');
-      }
-
-      // ── Drag & Drop ──
-      dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
-      dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
-      dropZone.addEventListener('drop', e => {
-        e.preventDefault();
-        dropZone.classList.remove('drag-over');
-        handleFile(e.dataTransfer.files?.[0]);
-      });
-      dropZone.addEventListener('click', e => {
-        if (e.target.tagName !== 'BUTTON') fileInput.click();
-      });
-      fileInput.addEventListener('change', e => handleFile(e.target.files?.[0]));
-
-      // ── Remove file ──
-      removeBtn.addEventListener('click', () => {
-        selectedFile = null;
-        previewVid.src = '';
-        previewArea.classList.remove('visible');
-        dropZone.style.display = '';
-        dropZone.classList.remove('has-file');
-        fileInput.value = '';
-      });
-
-      // ── Thumbnail ──
-      thumbInput.addEventListener('change', e => {
-        if (e.target.files?.[0]) {
-          thumbLabel.textContent = e.target.files[0].name;
-          showToast('✓ Thumbnail selected', 'success');
+      // Play button click — shows video or prompts to add source
+      playBtn.addEventListener('click', () => {
+        // If a real video src is set on #main-video, show it
+        if (video.src && video.src !== window.location.href) {
+          placeholder.style.display = 'none';
+          video.style.display = 'block';
+          video.play();
+        } else {
+          showToast('Connect a video source to play. Set the src attribute on #main-video.', 'info');
         }
       });
 
-      // ── Simulated Upload Flow ──
-      function runFakeUpload(onComplete) {
-        progressSection.style.display = 'block';
-        progressSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-
-        const fill     = document.getElementById('main-progress-fill');
-        const pctLabel = document.getElementById('upload-pct');
-        const speedEl  = document.getElementById('upload-speed');
-        const stageEl  = document.getElementById('upload-stage-label');
-
-        const stages = [
-          { id: 'stage-upload',   label: 'Uploading to servers…',    speed: '12.4 MB/s', end: 40  },
-          { id: 'stage-process',  label: 'Processing video stream…', speed: '—',         end: 65  },
-          { id: 'stage-optimize', label: 'Optimizing for delivery…', speed: '—',         end: 85  },
-          { id: 'stage-publish',  label: 'Publishing to CDN…',       speed: '—',         end: 100 },
-        ];
-
-        let pct = 0; let stageIdx = 0;
-
-        const tick = setInterval(() => {
-          pct = Math.min(pct + Math.random() * 3 + 0.5, 100);
-          fill.style.width = pct + '%';
-          pctLabel.textContent = Math.round(pct) + '%';
-
-          // Advance stages
-          while (stageIdx < stages.length && pct >= stages[stageIdx].end) {
-            document.getElementById(stages[stageIdx].id).classList.remove('pending');
-            document.getElementById(stages[stageIdx].id).classList.add('done');
-            stageIdx++;
-            if (stageIdx < stages.length) {
-              document.getElementById(stages[stageIdx].id).classList.add('pending');
-              stageEl.textContent = stages[stageIdx].label;
-              speedEl.textContent = stages[stageIdx].speed;
-            }
-          }
-
-          if (pct >= 100) {
-            clearInterval(tick);
-            stageEl.textContent = '✓ Upload complete!';
-            speedEl.textContent = '';
-            setTimeout(() => {
-              if (onComplete) onComplete();
-            }, 600);
-          }
-        }, 80);
-      }
-
-      // ── Submit ──
-      submitBtn.addEventListener('click', () => {
-        const title = document.getElementById('video-title').value.trim();
-        if (!selectedFile) { showToast('Please select a video file first.', 'error'); return; }
-        if (!title) { document.getElementById('video-title').focus(); showToast('Please enter a video title.', 'error'); return; }
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<svg data-feather="loader" width="16" height="16"></svg> Uploading…';
-        if (typeof feather !== 'undefined') feather.replace();
-        runFakeUpload(() => {
-          showToast('🎉 Video published successfully!', 'success');
-          setTimeout(() => window.location.href = 'admin.html', 1500);
-        });
+      // Like toggle
+      likeBtn.addEventListener('click', () => {
+        liked = !liked;
+        likeBtn.style.background = liked ? 'var(--crimson)' : '';
+        likeBtn.style.color      = liked ? '#fff' : '';
+        likeCount.textContent    = liked ? '24.7K' : '24.6K';
+        showToast(liked ? '❤️ Added to your liked videos' : 'Removed from liked', liked ? 'success' : 'info');
       });
 
-      // ── Save Draft ──
-      draftBtn.addEventListener('click', () => {
-        const title = document.getElementById('video-title').value.trim() || 'Untitled';
-        showToast(`📝 Draft "${title}" saved`, 'info');
+      // Save toggle
+      saveBtn.addEventListener('click', () => {
+        saved = !saved;
+        saveBtn.style.color = saved ? 'var(--neon)' : '';
+        showToast(saved ? '🔖 Saved to your library' : 'Removed from library', 'success');
+      });
+
+      // Share
+      shareBtn.addEventListener('click', () => {
+        if (navigator.share) {
+          navigator.share({ title: 'NOVA — Into the Digital Horizon', url: window.location.href });
+        } else {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast('🔗 Link copied to clipboard!', 'success');
+          });
+        }
       });
     });
   </script>
