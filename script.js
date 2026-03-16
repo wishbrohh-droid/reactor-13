@@ -1,36 +1,35 @@
 /* ============================================================
    VΞLTRIX — script.js
-   Full streaming platform logic
-
-   KEY FIX: Videos are stored as blob Object URLs in memory
-   (not base64 in localStorage — that causes quota errors and
-   broken playback). Only metadata + thumbnail are persisted.
-   Videos must be re-uploaded after a page refresh, but will
-   play instantly and reliably every time.
+   Storage: IndexedDB — videos persist permanently across
+   page closes, refreshes, and browser restarts.
+   No file size limit. No re-upload needed. Ever.
    ============================================================ */
 
 'use strict';
 
 // ── Config ────────────────────────────────────────────────
 const CONFIG = {
-  OWNER_PASSWORD: 'veltrix2024',   // ← Change this password!
-  STORAGE_KEY:    'veltrix_meta',  // Only metadata saved here
+  OWNER_PASSWORD: 'veltrix2024',  // ← Change this password!
+  DB_NAME:        'VeltrixDB',
+  DB_VERSION:     1,
+  STORE_VIDEOS:   'videos',
 };
 
 // ── State ─────────────────────────────────────────────────
 let state = {
-  videos:         [],   // full video objects (blobUrl lives in memory only)
+  db:             null,   // IndexedDB instance
+  videos:         [],     // lightweight metadata array (no blobs)
   filteredVideos: [],
   pendingAction:  null,
   currentVideoId: null,
-  selectedFile:   null, // File object chosen for upload
-  selectedThumb:  null, // File object for thumbnail
+  currentBlobUrl: null,   // active object URL — revoked on player close
+  selectedFile:   null,
+  selectedThumb:  null,
   authenticated:  false,
 };
 
 // ── DOM Refs ──────────────────────────────────────────────
 const $ = id => document.getElementById(id);
-
 const dom = {
   uploadTriggerBtn:   $('uploadTriggerBtn'),
   navUploadBtn:       $('navUploadBtn'),
@@ -68,84 +67,132 @@ const dom = {
   toast:              $('toast'),
 };
 
+// ── Inject dynamic styles ─────────────────────────────────
+document.head.insertAdjacentHTML('beforeend', `<style>
+@keyframes shake {
+  0%,100%{ transform:translateX(0) }
+  20%    { transform:translateX(-8px) }
+  40%    { transform:translateX(8px) }
+  60%    { transform:translateX(-5px) }
+  80%    { transform:translateX(5px) }
+}
+</style>`);
+
 // ── Toast ─────────────────────────────────────────────────
-function showToast(message, type = 'success', duration = 3200) {
-  dom.toast.textContent = message;
+function showToast(msg, type = 'success', ms = 3200) {
+  dom.toast.textContent = msg;
   dom.toast.className   = `toast ${type} show`;
-  setTimeout(() => { dom.toast.className = 'toast'; }, duration);
-}
-
-// ── Persistence (metadata only) ───────────────────────────
-/** Load metadata from localStorage. blobUrl is NOT stored. */
-function loadMeta() {
-  try {
-    const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
-    const meta = raw ? JSON.parse(raw) : [];
-    // Mark each video as offline — no blob after page reload
-    state.videos = meta.map(m => ({ ...m, blobUrl: null }));
-  } catch {
-    state.videos = [];
-  }
-}
-
-/** Save only metadata (strips blobUrl) to localStorage */
-function saveMeta() {
-  try {
-    const meta = state.videos.map(({ blobUrl, ...rest }) => rest);
-    localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(meta));
-  } catch (e) {
-    console.warn('localStorage save failed:', e);
-    showToast('Could not save metadata.', 'error');
-  }
+  setTimeout(() => { dom.toast.className = 'toast'; }, ms);
 }
 
 // ── Utilities ─────────────────────────────────────────────
 function uid() {
   return Date.now().toString(36) + Math.random().toString(36).slice(2);
 }
-
-function formatBytes(bytes) {
-  if (bytes < 1024)    return bytes + ' B';
-  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
-  return (bytes / 1048576).toFixed(1) + ' MB';
+function formatBytes(b) {
+  if (b < 1024)       return b + ' B';
+  if (b < 1048576)    return (b / 1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b / 1048576).toFixed(1) + ' MB';
+  return (b / 1073741824).toFixed(2) + ' GB';
 }
-
 function formatDate(ts) {
   return new Date(ts).toLocaleDateString('en-US', {
     year: 'numeric', month: 'short', day: 'numeric',
   });
 }
-
 function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
+  return new Promise((res, rej) => {
     const r = new FileReader();
-    r.onload  = () => resolve(r.result);
-    r.onerror = reject;
+    r.onload  = () => res(r.result);
+    r.onerror = rej;
     r.readAsDataURL(file);
   });
 }
-
 function animateCounter(el, target) {
-  let current = parseInt(el.textContent) || 0;
-  const step  = Math.max(1, Math.ceil(Math.abs(target - current) / 20));
-  const timer = setInterval(() => {
-    current = target > current
-      ? Math.min(current + step, target)
-      : Math.max(current - step, target);
-    el.textContent = current;
-    if (current === target) clearInterval(timer);
+  let cur = parseInt(el.textContent) || 0;
+  const step = Math.max(1, Math.ceil(Math.abs(target - cur) / 20));
+  const t = setInterval(() => {
+    cur = target > cur ? Math.min(cur + step, target) : Math.max(cur - step, target);
+    el.textContent = cur;
+    if (cur === target) clearInterval(t);
   }, 40);
 }
-
-function escapeHTML(str) {
+function escapeHTML(s) {
   const d = document.createElement('div');
-  d.appendChild(document.createTextNode(str));
+  d.appendChild(document.createTextNode(s));
   return d.innerHTML;
 }
 
 // ── Modal helpers ─────────────────────────────────────────
-function openModal(el)  { el.classList.add('active'); }
-function closeModal(el) { el.classList.remove('active'); }
+const openModal  = el => el.classList.add('active');
+const closeModal = el => el.classList.remove('active');
+
+// ── IndexedDB Layer ───────────────────────────────────────
+
+/** Open (or create) the VeltrixDB database */
+function openDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(CONFIG.DB_NAME, CONFIG.DB_VERSION);
+
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains(CONFIG.STORE_VIDEOS)) {
+        const store = db.createObjectStore(CONFIG.STORE_VIDEOS, { keyPath: 'id' });
+        store.createIndex('createdAt', 'createdAt', { unique: false });
+      }
+    };
+
+    req.onsuccess = e => resolve(e.target.result);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+/** Write a full video record (including Blob) to IndexedDB */
+function dbSaveVideo(record) {
+  return new Promise((resolve, reject) => {
+    const tx    = state.db.transaction(CONFIG.STORE_VIDEOS, 'readwrite');
+    const store = tx.objectStore(CONFIG.STORE_VIDEOS);
+    const req   = store.put(record);
+    req.onsuccess = () => resolve();
+    req.onerror   = e  => reject(e.target.error);
+  });
+}
+
+/** Load all records sorted newest-first (blobs included — needed for openPlayer) */
+function dbLoadAllVideos() {
+  return new Promise((resolve, reject) => {
+    const tx    = state.db.transaction(CONFIG.STORE_VIDEOS, 'readonly');
+    const store = tx.objectStore(CONFIG.STORE_VIDEOS);
+    const req   = store.getAll();
+    req.onsuccess = e => {
+      const sorted = (e.target.result || []).sort((a, b) => b.createdAt - a.createdAt);
+      resolve(sorted);
+    };
+    req.onerror = e => reject(e.target.error);
+  });
+}
+
+/** Fetch a single record by id (used when opening the player) */
+function dbGetVideo(id) {
+  return new Promise((resolve, reject) => {
+    const tx    = state.db.transaction(CONFIG.STORE_VIDEOS, 'readonly');
+    const store = tx.objectStore(CONFIG.STORE_VIDEOS);
+    const req   = store.get(id);
+    req.onsuccess = e => resolve(e.target.result || null);
+    req.onerror   = e => reject(e.target.error);
+  });
+}
+
+/** Remove a record from IndexedDB */
+function dbDeleteVideo(id) {
+  return new Promise((resolve, reject) => {
+    const tx    = state.db.transaction(CONFIG.STORE_VIDEOS, 'readwrite');
+    const store = tx.objectStore(CONFIG.STORE_VIDEOS);
+    const req   = store.delete(id);
+    req.onsuccess = () => resolve();
+    req.onerror   = e  => reject(e.target.error);
+  });
+}
 
 // ── Password Gate ─────────────────────────────────────────
 function requirePassword(action, callback) {
@@ -175,25 +222,6 @@ function handlePasswordConfirm() {
   }
 }
 
-// Inject shake keyframe once
-const shakeStyle = document.createElement('style');
-shakeStyle.textContent = `
-@keyframes shake {
-  0%,100%{ transform:translateX(0) }
-  20%    { transform:translateX(-8px) }
-  40%    { transform:translateX(8px) }
-  60%    { transform:translateX(-5px) }
-  80%    { transform:translateX(5px) }
-}
-.offline-badge {
-  position:absolute; top:8px; left:8px;
-  background:rgba(255,160,0,0.85);
-  color:#000; font-size:10px; font-weight:700;
-  border-radius:5px; padding:3px 8px;
-  letter-spacing:.5px; pointer-events:none;
-}`;
-document.head.appendChild(shakeStyle);
-
 // ── Render Gallery ────────────────────────────────────────
 function renderGallery(videos) {
   dom.videoGrid.innerHTML = '';
@@ -216,16 +244,10 @@ function renderGallery(videos) {
       ? `<img src="${v.thumb}" alt="${escapeHTML(v.title)}" loading="lazy" />`
       : `<div class="thumb-placeholder">▶</div>`;
 
-    // Warn when video isn't loaded in memory (after page refresh)
-    const offlineBadge = !v.blobUrl
-      ? `<div class="offline-badge">↺ Re-upload to play</div>`
-      : '';
-
     card.innerHTML = `
       <div class="card-thumb">
         ${thumbHTML}
         <div class="card-play"><div class="card-play-btn">▶</div></div>
-        ${offlineBadge}
         <span class="card-badge">${v.size || ''}</span>
       </div>
       <div class="card-body">
@@ -243,50 +265,63 @@ function renderGallery(videos) {
 }
 
 // ── Video Player ──────────────────────────────────────────
-function openPlayer(id) {
-  const video = state.videos.find(v => v.id === id);
-  if (!video) return;
+async function openPlayer(id) {
+  try {
+    // Pull the full record (with Blob) from IndexedDB
+    const record = await dbGetVideo(id);
+    if (!record || !record.videoBlob) {
+      showToast('Video not found in storage.', 'error');
+      return;
+    }
 
-  // If no blob URL (after page refresh), tell user to re-upload
-  if (!video.blobUrl) {
-    showToast('Video not in memory — please re-upload this video to watch it.', 'error', 4500);
-    return;
+    // Revoke the previous blob URL to free memory
+    if (state.currentBlobUrl) URL.revokeObjectURL(state.currentBlobUrl);
+
+    // Create a fresh playable URL from the stored Blob
+    state.currentBlobUrl = URL.createObjectURL(record.videoBlob);
+    state.currentVideoId = id;
+
+    dom.playerTitle.textContent = record.title;
+    dom.playerDate.textContent  = `Uploaded on ${formatDate(record.createdAt)}`;
+    dom.videoPlayer.src         = state.currentBlobUrl;
+    dom.videoPlayer.load();
+
+    openModal(dom.playerModal);
+    setTimeout(() => dom.videoPlayer.play().catch(() => {}), 300);
+
+  } catch (err) {
+    console.error('openPlayer error:', err);
+    showToast('Failed to load video.', 'error');
   }
-
-  state.currentVideoId = id;
-  dom.playerTitle.textContent = video.title;
-  dom.playerDate.textContent  = `Uploaded ${formatDate(video.createdAt)}`;
-
-  // ✅ Use blob URL — instant playback, no base64 involved
-  dom.videoPlayer.src = video.blobUrl;
-  dom.videoPlayer.load();
-
-  openModal(dom.playerModal);
-  setTimeout(() => dom.videoPlayer.play().catch(() => {}), 300);
 }
 
 function closePlayer() {
   dom.videoPlayer.pause();
   dom.videoPlayer.removeAttribute('src');
   dom.videoPlayer.load();
+
+  if (state.currentBlobUrl) {
+    URL.revokeObjectURL(state.currentBlobUrl);
+    state.currentBlobUrl = null;
+  }
+
   state.currentVideoId = null;
   closeModal(dom.playerModal);
 }
 
 // ── Delete Video ──────────────────────────────────────────
 function deleteVideo(id) {
-  requirePassword('delete', () => {
-    const idx = state.videos.findIndex(v => v.id === id);
-    if (idx === -1) return;
-
-    // Free memory
-    if (state.videos[idx].blobUrl) URL.revokeObjectURL(state.videos[idx].blobUrl);
-
-    state.videos.splice(idx, 1);
-    saveMeta();
-    refreshAll();
-    closePlayer();
-    showToast('Video deleted.', 'error');
+  requirePassword('delete', async () => {
+    try {
+      await dbDeleteVideo(id);
+      state.videos = state.videos.filter(v => v.id !== id);
+      refreshAll();
+      closePlayer();
+      showToast('Video deleted.', 'error');
+    } catch (err) {
+      console.error('Delete error:', err);
+      showToast('Could not delete video.', 'error');
+    }
   });
 }
 
@@ -311,18 +346,16 @@ function resetUploadForm() {
   dom.submitUpload.disabled       = false;
 }
 
-/** Handle video file selection — create blob URL immediately */
 function handleVideoFile(file) {
   if (!file || !file.type.startsWith('video/')) {
     showToast('Please select a valid video file.', 'error');
     return;
   }
-
   state.selectedFile = file;
 
-  // ✅ Object URL — the correct way to play local files
-  const objectUrl = URL.createObjectURL(file);
-  dom.previewVideo.src            = objectUrl;
+  // Use object URL just for the preview player
+  const previewUrl = URL.createObjectURL(file);
+  dom.previewVideo.src            = previewUrl;
   dom.previewFilename.textContent = file.name;
   dom.previewSize.textContent     = formatBytes(file.size);
   dom.uploadPreview.style.display = 'block';
@@ -333,74 +366,75 @@ function handleVideoFile(file) {
   }
 }
 
-/** Animated progress bar */
-function fakeProgress() {
+function animateProgress(steps) {
   return new Promise(resolve => {
     dom.progressWrap.style.display = 'block';
     dom.progressFill.style.width   = '0%';
-    dom.progressLabel.textContent  = 'Processing…';
-    const steps = [
-      { at: 25,  label: 'Reading file…' },
-      { at: 55,  label: 'Preparing video…' },
-      { at: 85,  label: 'Almost ready…' },
-      { at: 100, label: 'Done!' },
-    ];
-    let pct = 0, stepIdx = 0;
+    dom.progressLabel.textContent  = steps[0].label;
+
+    let pct = 0, idx = 0;
     const iv = setInterval(() => {
-      pct += Math.random() * 5 + 2;
-      if (stepIdx < steps.length && pct >= steps[stepIdx].at) {
-        dom.progressLabel.textContent = steps[stepIdx].label;
-        stepIdx++;
+      pct += Math.random() * 6 + 2;
+      while (idx < steps.length && pct >= steps[idx].at) {
+        dom.progressLabel.textContent = steps[idx].label;
+        idx++;
       }
       if (pct >= 100) {
         pct = 100;
         dom.progressFill.style.width = '100%';
         clearInterval(iv);
-        setTimeout(resolve, 350);
+        setTimeout(resolve, 300);
       } else {
         dom.progressFill.style.width = pct + '%';
       }
-    }, 60);
+    }, 55);
   });
 }
 
-/** Submit upload */
 async function handleUploadSubmit() {
   const title = dom.videoTitleInput.value.trim();
   if (!state.selectedFile) { showToast('Please select a video file first.', 'error'); return; }
-  if (!title)               { dom.videoTitleInput.focus(); showToast('Please enter a title.', 'error'); return; }
+  if (!title)              { dom.videoTitleInput.focus(); showToast('Please enter a title.', 'error'); return; }
 
   dom.submitUpload.disabled = true;
 
   try {
-    await fakeProgress();
+    const progressJob = animateProgress([
+      { at: 20,  label: 'Reading file…' },
+      { at: 50,  label: 'Saving to storage…' },
+      { at: 80,  label: 'Finalizing…' },
+      { at: 100, label: 'Done!' },
+    ]);
 
-    // ✅ Create blob URL for in-session playback
-    const blobUrl = URL.createObjectURL(state.selectedFile);
-
-    // Only thumbnail gets base64 (small image, safe for localStorage)
+    // Thumbnail → base64 (small image, safe)
     const thumbBase64 = state.selectedThumb
       ? await fileToBase64(state.selectedThumb)
       : null;
 
-    const newVideo = {
+    // Build the record — videoBlob is stored natively by IndexedDB (no base64!)
+    const record = {
       id:        uid(),
       title:     title,
-      blobUrl:   blobUrl,      // in-memory only, not saved to localStorage
-      thumb:     thumbBase64,  // saved to localStorage
+      videoBlob: state.selectedFile,  // Raw Blob → IndexedDB stores it as binary
+      thumb:     thumbBase64,
       size:      formatBytes(state.selectedFile.size),
       createdAt: Date.now(),
     };
 
-    state.videos.unshift(newVideo);
-    saveMeta(); // strips blobUrl before saving
+    // Save to IndexedDB and wait for the progress animation simultaneously
+    await Promise.all([dbSaveVideo(record), progressJob]);
+
+    // Push a lightweight copy (no blob) into the in-memory list for the gallery
+    const { videoBlob, ...meta } = record;
+    state.videos.unshift(meta);
+
     refreshAll();
     closeModal(dom.uploadModal);
-    showToast(`"${title}" added to library!`, 'success');
+    showToast(`"${title}" saved permanently! 🎬`, 'success');
 
   } catch (err) {
     console.error('Upload error:', err);
-    showToast('Something went wrong. Try again.', 'error');
+    showToast('Upload failed. Try a different file.', 'error');
     dom.submitUpload.disabled = false;
   }
 }
@@ -414,7 +448,7 @@ function handleSearch(query) {
   renderGallery(state.filteredVideos);
 }
 
-// ── Refresh all UI ────────────────────────────────────────
+// ── Refresh UI ────────────────────────────────────────────
 function refreshAll() {
   const q = dom.searchInput.value.trim().toLowerCase();
   state.filteredVideos = q
@@ -442,10 +476,13 @@ function initDragDrop() {
   });
 }
 
-// ── Event Listeners ───────────────────────────────────────
+// ── Events ────────────────────────────────────────────────
 function bindEvents() {
   dom.uploadTriggerBtn.addEventListener('click', () => requirePassword('upload', openUploadPanel));
-  dom.navUploadBtn.addEventListener('click', e => { e.preventDefault(); requirePassword('upload', openUploadPanel); });
+  dom.navUploadBtn.addEventListener('click', e => {
+    e.preventDefault();
+    requirePassword('upload', openUploadPanel);
+  });
 
   dom.closePassword.addEventListener('click', () => closeModal(dom.passwordModal));
   dom.confirmPassword.addEventListener('click', handlePasswordConfirm);
@@ -490,11 +527,30 @@ function bindEvents() {
 }
 
 // ── Init ──────────────────────────────────────────────────
-function init() {
-  loadMeta();
-  bindEvents();
-  refreshAll();
-  console.log('%cVΞLTRIX ready 🚀', 'color:#00f0ff;font-family:monospace;font-size:14px;font-weight:bold;');
+async function init() {
+  try {
+    // 1. Open IndexedDB
+    state.db = await openDB();
+
+    // 2. Load all stored video records
+    const records = await dbLoadAllVideos();
+
+    // 3. Keep only metadata in memory — blobs are fetched on demand when playing
+    state.videos = records.map(({ videoBlob, ...meta }) => meta);
+
+    // 4. Bind UI events and render
+    bindEvents();
+    refreshAll();
+
+    console.log(
+      '%cVΞLTRIX ready 🚀  |  IndexedDB active  |  ' + state.videos.length + ' video(s) loaded',
+      'color:#00f0ff;font-family:monospace;font-size:13px;font-weight:bold;'
+    );
+
+  } catch (err) {
+    console.error('Init failed:', err);
+    showToast('Storage error. Please refresh.', 'error');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', init);
