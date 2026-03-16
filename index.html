@@ -1,150 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-  <title>HOLLOW HOUSE</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VΞLTRIX — Stream the Future</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Syne:wght@300;400;500;600&display=swap" rel="stylesheet" />
 </head>
 <body>
 
-<!-- ═══════ TITLE SCREEN ═══════ -->
-<div id="screen-title" class="screen active">
-  <div class="title-grid"></div>
-  <div class="title-wrap">
-    <div class="title-skull">💀</div>
-    <h1 class="title-logo">HOLLOW<span>HOUSE</span></h1>
-    <p class="title-year">EST. 1887  —  CONDEMNED 1994</p>
-    <div class="boot-log" id="boot-log"></div>
-    <button class="btn-enter hidden" id="btn-start">[ ENTER THE HOUSE ]</button>
-    <div class="key-hints">
-      <span>WASD — MOVE</span><span>HOLD MOUSE + DRAG — LOOK</span>
-      <span>E — INTERACT</span><span>F — FLASHLIGHT</span><span>ESC — PAUSE</span>
+  <!-- ░░ ANIMATED BACKGROUND ░░ -->
+  <div class="bg-grid"></div>
+  <div class="bg-orbs">
+    <span class="orb orb-1"></span>
+    <span class="orb orb-2"></span>
+    <span class="orb orb-3"></span>
+  </div>
+
+  <!-- ░░ HEADER ░░ -->
+  <header class="header">
+    <div class="header-inner">
+      <div class="logo">
+        <span class="logo-icon">▶</span>
+        <span class="logo-text">VΞL<em>TRIX</em></span>
+      </div>
+
+      <nav class="nav">
+        <a href="#" class="nav-link active">Home</a>
+        <a href="#gallery" class="nav-link">Library</a>
+        <a href="#" class="nav-link" id="navUploadBtn">Upload</a>
+      </nav>
+
+      <div class="header-actions">
+        <div class="search-wrap">
+          <span class="search-icon">⌕</span>
+          <input type="text" id="searchInput" class="search-input" placeholder="Search videos…" />
+        </div>
+        <button class="btn-upload" id="uploadTriggerBtn">
+          <span class="btn-plus">+</span> New Video
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ░░ HERO ░░ -->
+  <section class="hero">
+    <div class="hero-badge">⚡ Now Streaming</div>
+    <h1 class="hero-title">
+      Stream the<br /><span class="gradient-text">Future.</span>
+    </h1>
+    <p class="hero-sub">Your personal cinematic universe — upload, curate, watch.</p>
+    <div class="hero-stats">
+      <div class="stat"><span id="statCount">0</span> <em>Videos</em></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span>HD</span> <em>Quality</em></div>
+      <div class="stat-divider"></div>
+      <div class="stat"><span>∞</span> <em>Storage</em></div>
+    </div>
+  </section>
+
+  <!-- ░░ GALLERY ░░ -->
+  <main class="gallery-section" id="gallery">
+    <div class="section-header">
+      <h2 class="section-title">All Videos</h2>
+      <span class="section-count" id="videoCount">0 videos</span>
+    </div>
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">◈</div>
+      <h3>No videos yet</h3>
+      <p>Upload your first video to get started.</p>
+      <button class="btn-upload" onclick="document.getElementById('uploadTriggerBtn').click()">
+        + Upload Video
+      </button>
+    </div>
+
+    <!-- Video grid -->
+    <div class="video-grid" id="videoGrid"></div>
+  </main>
+
+  <!-- ░░ VIDEO PLAYER MODAL ░░ -->
+  <div class="modal-overlay" id="playerModal">
+    <div class="player-modal">
+      <button class="modal-close" id="closePlayer">✕</button>
+      <div class="player-header">
+        <h3 class="player-title" id="playerTitle">Video Title</h3>
+      </div>
+      <div class="player-wrap">
+        <video id="videoPlayer" controls playsinline></video>
+      </div>
+      <div class="player-meta">
+        <span class="player-date" id="playerDate"></span>
+        <button class="btn-delete-video" id="deleteCurrentVideo">🗑 Delete Video</button>
+      </div>
     </div>
   </div>
-  <div class="scanlines"></div>
-</div>
 
-<!-- ═══════ CLICK-TO-LOCK ═══════ -->
-<div id="screen-lock" class="screen hidden">
-  <div class="lock-wrap">
-    <div class="lock-icon">🔦</div>
-    <p class="lock-txt">CLICK TO CONTINUE</p>
-    <p class="lock-sub">Mouse will be captured for look controls</p>
-  </div>
-  <div class="scanlines"></div>
-</div>
-
-<!-- ═══════ CANVAS ═══════ -->
-<canvas id="gc"></canvas>
-
-<!-- ═══════ HUD ═══════ -->
-<div id="hud" class="hidden">
-  <div id="hud-top">
-    <div id="hud-room">
-      <span class="hud-dot">◈</span>
-      <span id="room-label">OUTSIDE</span>
-    </div>
-    <div id="hud-bat">
-      <span class="hud-sm">BATTERY</span>
-      <div class="bat-outer"><div id="bat-inner"></div></div>
-      <span id="bat-num">100%</span>
+  <!-- ░░ PASSWORD MODAL ░░ -->
+  <div class="modal-overlay" id="passwordModal">
+    <div class="password-modal">
+      <button class="modal-close" id="closePassword">✕</button>
+      <div class="pw-icon">🔐</div>
+      <h3 class="pw-title">Owner Access</h3>
+      <p class="pw-sub">Enter the admin password to continue.</p>
+      <div class="pw-input-wrap">
+        <input type="password" id="passwordInput" class="pw-input" placeholder="Enter password…" />
+        <button class="btn-confirm" id="confirmPassword">Unlock</button>
+      </div>
+      <p class="pw-error" id="pwError"></p>
     </div>
   </div>
 
-  <div id="hud-obj">
-    <div class="obj-tag">▶ OBJECTIVE</div>
-    <div id="obj-text">Find a way inside the house.</div>
-  </div>
+  <!-- ░░ UPLOAD PANEL MODAL ░░ -->
+  <div class="modal-overlay" id="uploadModal">
+    <div class="upload-modal">
+      <button class="modal-close" id="closeUpload">✕</button>
+      <h3 class="upload-title">Upload Video</h3>
 
-  <div id="crosshair">
-    <div class="cx-h"></div><div class="cx-v"></div>
-  </div>
+      <!-- Drop zone -->
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">⬆</div>
+        <p class="drop-text">Drag & drop a video here</p>
+        <p class="drop-sub">or</p>
+        <label class="btn-file-label" for="videoFileInput">Browse File</label>
+        <input type="file" id="videoFileInput" accept="video/*" hidden />
+      </div>
 
-  <div id="interact-hint" class="hidden">
-    <span class="ih-key">E</span>
-    <span id="ih-label">EXAMINE</span>
-  </div>
+      <!-- Preview -->
+      <div class="upload-preview" id="uploadPreview" style="display:none;">
+        <video id="previewVideo" controls></video>
+        <div class="preview-info">
+          <span class="preview-filename" id="previewFilename"></span>
+          <span class="preview-size" id="previewSize"></span>
+        </div>
+      </div>
 
-  <!-- overlays -->
-  <div id="ov-vignette"></div>
-  <div id="ov-blood"></div>
-  <div id="ov-dark"></div>
-  <div id="ov-flicker"></div>
-  <div id="ov-static" class="hidden"></div>
+      <!-- Title input -->
+      <div class="form-group">
+        <label class="form-label">Video Title</label>
+        <input type="text" id="videoTitleInput" class="form-input" placeholder="Give your video a title…" />
+      </div>
 
-  <!-- scare flash -->
-  <div id="scare" class="hidden">
-    <div id="scare-face"></div>
-  </div>
+      <!-- Thumbnail input -->
+      <div class="form-group">
+        <label class="form-label">Thumbnail (optional)</label>
+        <label class="btn-file-label small" for="thumbFileInput">Choose Image</label>
+        <input type="file" id="thumbFileInput" accept="image/*" hidden />
+        <span class="thumb-name" id="thumbName">No file chosen</span>
+      </div>
 
-  <div class="scanlines scanlines-half"></div>
-</div>
+      <!-- Upload progress -->
+      <div class="progress-wrap" id="progressWrap" style="display:none;">
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+        <span class="progress-label" id="progressLabel">Processing…</span>
+      </div>
 
-<!-- ═══════ DOCUMENT READER ═══════ -->
-<div id="doc-panel" class="hidden">
-  <div class="doc-box">
-    <div class="doc-hdr">
-      <span id="doc-title">—</span>
-      <div class="doc-stamp">CONFIDENTIAL</div>
-    </div>
-    <div class="doc-body" id="doc-body"></div>
-    <button class="doc-close" id="doc-close">[CLOSE — E]</button>
-  </div>
-  <div class="scanlines"></div>
-</div>
-
-<!-- ═══════ NOTE POPUP ═══════ -->
-<div id="note-popup" class="hidden">
-  <div class="np-tag">EVENT</div>
-  <div id="np-text"></div>
-</div>
-
-<!-- ═══════ CHOICE PANEL ═══════ -->
-<div id="choice-panel" class="hidden">
-  <div class="choice-box">
-    <div class="choice-skull">💀</div>
-    <div class="choice-header">FINAL DECISION</div>
-    <div class="choice-body" id="choice-body">The basement furnace is still running.<br>The house could still be destroyed.</div>
-    <div class="choice-btns">
-      <button class="cbtn cbtn-good" id="btn-burn">[ BURN IT DOWN — ESCAPE ]</button>
-      <button class="cbtn cbtn-bad"  id="btn-stay">[ STAY AND BECOME PART OF IT ]</button>
+      <button class="btn-submit" id="submitUpload">⬆ Upload to Library</button>
     </div>
   </div>
-  <div class="scanlines"></div>
-</div>
 
-<!-- ═══════ ENDING ═══════ -->
-<div id="screen-end" class="screen hidden">
-  <div class="end-wrap">
-    <div class="end-icon" id="end-icon">💀</div>
-    <h2 class="end-title" id="end-title">—</h2>
-    <div class="end-text" id="end-text"></div>
-    <div class="end-tag" id="end-tag"></div>
-    <button class="btn-enter" id="btn-again">[ RETURN ]</button>
-  </div>
-  <div class="scanlines"></div>
-</div>
+  <!-- ░░ TOAST NOTIFICATION ░░ -->
+  <div class="toast" id="toast"></div>
 
-<!-- ═══════ PAUSE ═══════ -->
-<div id="screen-pause" class="screen hidden">
-  <div class="pause-wrap">
-    <h2 class="pause-title">PAUSED</h2>
-    <div class="ctrl-list">
-      <div class="cl-row"><b>W A S D</b><span>Move</span></div>
-      <div class="cl-row"><b>HOLD MOUSE + DRAG</b><span>Look around</span></div>
-      <div class="cl-row"><b>CLICK CANVAS</b><span>Lock mouse (if on server)</span></div>
-      <div class="cl-row"><b>E</b><span>Interact / Close doc</span></div>
-      <div class="cl-row"><b>F</b><span>Toggle flashlight</span></div>
-      <div class="cl-row"><b>SHIFT</b><span>Sprint</span></div>
-      <div class="cl-row"><b>ESC</b><span>Pause</span></div>
-    </div>
-    <button class="btn-enter" id="btn-resume">[ RESUME ]</button>
-  </div>
-  <div class="scanlines"></div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>
