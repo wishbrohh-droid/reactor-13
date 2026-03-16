@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin Dashboard | NOVA</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.1/feather.min.js" defer></script>
+</head>
+<body>
+
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+  <div class="noise"></div>
+  <canvas id="particle-canvas"></canvas>
+
+  <div id="page-loader">
+    <div class="loader-logo">NOVA</div>
+    <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ── ADMIN LAYOUT ── -->
+  <div class="admin-layout">
+
+    <!-- ── SIDEBAR ── -->
+    <aside class="admin-sidebar">
+      <div class="admin-sidebar-logo">
+        <a href="index.html" style="text-decoration:none;">
+          <span class="logo-text">NOVA</span>
+          <span class="logo-sub">Admin Dashboard</span>
+        </a>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="sidebar-nav-label">Overview</div>
+        <a href="admin.html" class="sidebar-nav-item active">
+          <svg data-feather="layout" width="16" height="16"></svg>
+          Dashboard
+        </a>
+        <a href="#" class="sidebar-nav-item">
+          <svg data-feather="trending-up" width="16" height="16"></svg>
+          Analytics
+        </a>
+
+        <div class="sidebar-nav-label">Content</div>
+        <a href="#" class="sidebar-nav-item">
+          <svg data-feather="film" width="16" height="16"></svg>
+          Videos
+          <span class="sidebar-badge">24</span>
+        </a>
+        <a href="upload.html" class="sidebar-nav-item">
+          <svg data-feather="upload-cloud" width="16" height="16"></svg>
+          Upload New
+        </a>
+        <a href="#" class="sidebar-nav-item">
+          <svg data-feather="grid" width="16" height="16"></svg>
+          Collections
+        </a>
+
+        <div class="sidebar-nav-label">Management</div>
+        <a href="#" class="sidebar-nav-item">
+          <svg data-feather="users" width="16" height="16"></svg>
+          Users
+        </a>
+        <a href="#" class="sidebar-nav-item">
+          <svg data-feather="tag" width="16" height="16"></svg>
+          Categories
+        </a>
+        <a href="#" class="sidebar-nav-item">
+          <svg data-feather="dollar-sign" width="16" height="16"></svg>
+          Revenue
+        </a>
+        <a href="#" class="sidebar-nav-item">
+          <svg data-feather="bell" width="16" height="16"></svg>
+          Notifications
+          <span class="sidebar-badge" style="background:var(--crimson);">3</span>
+        </a>
+
+        <div class="sidebar-nav-label">System</div>
+        <a href="#" class="sidebar-nav-item">
+          <svg data-feather="settings" width="16" height="16"></svg>
+          Settings
+        </a>
+        <a href="index.html" class="sidebar-nav-item">
+          <svg data-feather="external-link" width="16" height="16"></svg>
+          View Site
+        </a>
+      </nav>
+
+      <!-- Sidebar footer -->
+      <div style="padding:16px 24px;border-top:1px solid var(--border);margin-top:auto;">
+        <div style="display:flex;align-items:center;gap:12px;">
+          <div style="width:34px;height:34px;background:var(--neon-dim);border:1px solid rgba(0,229,255,0.3);border-radius:50%;display:grid;place-items:center;font-size:14px;color:var(--neon);">A</div>
+          <div>
+            <div style="font-size:13px;font-weight:500;color:var(--text);">Admin</div>
+            <div style="font-size:11px;color:var(--text-muted);">admin@nova.tv</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- ── MAIN CONTENT ── -->
+    <div class="admin-main">
+
+      <!-- Topbar -->
+      <div class="admin-topbar">
+        <div style="display:flex;align-items:center;gap:14px;">
+          <button class="btn-icon" id="hamburger">
+            <svg data-feather="menu" width="16" height="16"></svg>
+          </button>
+          <span class="admin-topbar-title">Dashboard</span>
+        </div>
+        <div class="admin-topbar-right">
+          <div class="nav-search">
+            <svg data-feather="search" width="15" height="15"></svg>
+            <input type="text" placeholder="Search content…" />
+          </div>
+          <button class="btn-icon">
+            <svg data-feather="bell" width="16" height="16"></svg>
+          </button>
+          <a href="upload.html" class="btn btn-primary btn-sm">
+            <svg data-feather="plus" width="14" height="14"></svg>
+            New Video
+          </a>
+        </div>
+      </div>
+
+      <!-- Content Area -->
+      <div class="admin-content">
+
+        <!-- Welcome Banner -->
+        <div style="background:linear-gradient(135deg,rgba(0,229,255,0.07),rgba(168,85,247,0.04));border:1px solid rgba(0,229,255,0.15);border-radius:var(--radius-lg);padding:28px 32px;margin-bottom:28px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;">
+          <div>
+            <div style="font-family:var(--font-display);font-size:24px;letter-spacing:1px;color:var(--text);margin-bottom:4px;">
+              Welcome back, Admin 👋
+            </div>
+            <div style="font-size:14px;color:var(--text-muted);">Here's what's happening with your platform today.</div>
+          </div>
+          <a href="upload.html" class="btn btn-primary btn-sm">
+            <svg data-feather="upload-cloud" width="14" height="14"></svg>
+            Upload Video
+          </a>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-icon">
+              <svg data-feather="eye" width="18" height="18"></svg>
+            </div>
+            <div class="stat-card-value" data-count="2847392">0</div>
+            <div class="stat-card-label">Total Views</div>
+            <div class="stat-card-change stat-change-up">
+              <svg data-feather="arrow-up" width="11" height="11"></svg>+14.2%
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon">
+              <svg data-feather="film" width="18" height="18"></svg>
+            </div>
+            <div class="stat-card-value" data-count="24">0</div>
+            <div class="stat-card-label">Total Videos</div>
+            <div class="stat-card-change stat-change-up">
+              <svg data-feather="arrow-up" width="11" height="11"></svg>+3
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon">
+              <svg data-feather="users" width="18" height="18"></svg>
+            </div>
+            <div class="stat-card-value" data-count="18743">0</div>
+            <div class="stat-card-label">Subscribers</div>
+            <div class="stat-card-change stat-change-up">
+              <svg data-feather="arrow-up" width="11" height="11"></svg>+8.7%
+            </div>
+          </div>
+
+          <div class="stat-card">
+            <div class="stat-card-icon">
+              <svg data-feather="dollar-sign" width="18" height="18"></svg>
+            </div>
+            <div class="stat-card-value" data-count="4820" data-prefix="$">$0</div>
+            <div class="stat-card-label">Revenue (MTD)</div>
+            <div class="stat-card-change stat-change-down">
+              <svg data-feather="arrow-down" width="11" height="11"></svg>−2.1%
+            </div>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-card">
+          <div class="chart-card-header">
+            <div class="chart-card-title">VIEWS OVER TIME</div>
+            <div style="display:flex;gap:8px;">
+              <button class="btn btn-ghost btn-xs chart-period active-period" data-period="7d">7D</button>
+              <button class="btn btn-ghost btn-xs chart-period" data-period="30d">30D</button>
+              <button class="btn btn-ghost btn-xs chart-period" data-period="90d">90D</button>
+            </div>
+          </div>
+          <div class="chart-area" id="chart-area">
+            <!-- bars injected by JS -->
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:8px 16px 0;font-size:10px;color:var(--text-dim);" id="chart-labels"></div>
+        </div>
+
+        <!-- Video Management Table -->
+        <div class="admin-table-card">
+          <div class="admin-table-header">
+            <div class="admin-table-title">VIDEO LIBRARY</div>
+            <div class="admin-table-actions">
+              <div class="nav-search" style="width:220px;">
+                <svg data-feather="search" width="14" height="14"></svg>
+                <input type="text" id="table-search" placeholder="Filter videos…" />
+              </div>
+              <button class="btn btn-ghost btn-sm">
+                <svg data-feather="filter" width="14" height="14"></svg>
+                Filter
+              </button>
+              <a href="upload.html" class="btn btn-primary btn-sm">
+                <svg data-feather="plus" width="14" height="14"></svg>
+                Add Video
+              </a>
+            </div>
+          </div>
+
+          <table class="data-table" id="video-table">
+            <thead>
+              <tr>
+                <th>VIDEO</th>
+                <th>STATUS</th>
+                <th>VIEWS</th>
+                <th>RATING</th>
+                <th>DATE</th>
+                <th>ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody id="video-table-body">
+              <!-- injected by JS -->
+            </tbody>
+          </table>
+
+          <!-- Mobile card list (shown on small screens instead of table) -->
+          <div id="mobile-video-list" style="display:none;padding:16px;"></div>
+
+          <!-- Pagination -->
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-top:1px solid var(--border);flex-wrap:wrap;gap:12px;">
+            <span style="font-size:13px;color:var(--text-muted);">Showing 1–7 of 24 videos</span>
+            <div style="display:flex;gap:6px;">
+              <button class="btn-icon">
+                <svg data-feather="chevron-left" width="14" height="14"></svg>
+              </button>
+              <button class="btn btn-primary btn-xs" style="min-width:32px;">1</button>
+              <button class="btn btn-ghost btn-xs" style="min-width:32px;" onclick="showToast('Page 2', 'info')">2</button>
+              <button class="btn btn-ghost btn-xs" style="min-width:32px;" onclick="showToast('Page 3', 'info')">3</button>
+              <button class="btn-icon">
+                <svg data-feather="chevron-right" width="14" height="14"></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Delete Confirm Modal -->
+  <div id="delete-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(10px);z-index:800;align-items:center;justify-content:center;padding:20px;">
+    <div style="background:var(--bg-deep);border:1px solid rgba(255,45,85,0.3);border-radius:var(--radius-xl);padding:40px;max-width:400px;width:100%;text-align:center;">
+      <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
+      <div style="font-family:var(--font-display);font-size:22px;letter-spacing:1px;color:var(--text);margin-bottom:8px;">DELETE VIDEO?</div>
+      <p style="font-size:14px;color:var(--text-muted);margin-bottom:28px;line-height:1.6;">This action cannot be undone. The video will be permanently removed from the platform.</p>
+      <div style="display:flex;gap:12px;justify-content:center;">
+        <button class="btn btn-ghost" id="cancel-delete">Cancel</button>
+        <button class="btn btn-danger" id="confirm-delete">Delete Forever</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/script.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+
+      // ── Video data ──
+      const videos = [
+        { id: 1, title: 'Into the Digital Horizon', status: 'published', views: '1.2M', rating: '9.4', date: 'Mar 10, 2026', thumb: 'thumb-1', emoji: '🎬' },
+        { id: 2, title: 'AI Consciousness: The Next Frontier', status: 'published', views: '480K', rating: '8.7', date: 'Feb 22, 2026', thumb: 'thumb-2', emoji: '🤖' },
+        { id: 3, title: 'Mastering Motion: Advanced UI Animation', status: 'published', views: '220K', rating: '9.1', date: 'Mar 5, 2026', thumb: 'thumb-3', emoji: '🎨' },
+        { id: 4, title: 'Neon Frequencies — Live Synthwave', status: 'published', views: '890K', rating: '9.8', date: 'Jan 15, 2026', thumb: 'thumb-4', emoji: '🎵' },
+        { id: 5, title: 'Space Architecture: Building the Moon Base', status: 'processing', views: '—', rating: '—', date: 'Mar 12, 2026', thumb: 'thumb-5', emoji: '🚀' },
+        { id: 6, title: 'The Last Signal from Station Zero', status: 'draft', views: '—', rating: '—', date: 'Mar 14, 2026', thumb: 'thumb-6', emoji: '🎭' },
+        { id: 7, title: 'The Complete Guide to Glassmorphism', status: 'published', views: '510K', rating: '9.0', date: 'Jan 28, 2026', thumb: 'thumb-1', emoji: '💡' },
+      ];
+
+      let tableVideos = [...videos];
+      let pendingDeleteId = null;
+
+      // ── Status badge HTML ──
+      function statusBadge(s) {
+        const map = {
+          published:  '<span class="status-badge status-published"><span style="width:5px;height:5px;background:currentColor;border-radius:50%;"></span>Published</span>',
+          draft:      '<span class="status-badge status-draft">Draft</span>',
+          processing: '<span class="status-badge status-processing">Processing</span>',
+        };
+        return map[s] || s;
+      }
+
+      // ── Render table ──
+      function renderTable(data) {
+        const tbody = document.getElementById('video-table-body');
+        tbody.innerHTML = data.map(v => `
+          <tr id="row-${v.id}">
+            <td>
+              <div class="table-title-wrap">
+                <div class="table-thumb ${v.thumb}" style="display:grid;place-items:center;font-size:14px;">
+                  ${v.emoji}
+                </div>
+                <span class="table-title-text">${v.title}</span>
+              </div>
+            </td>
+            <td>${statusBadge(v.status)}</td>
+            <td style="font-family:var(--font-mono);font-size:12px;">${v.views}</td>
+            <td style="color:var(--gold);font-weight:600;">${v.rating !== '—' ? '★ ' + v.rating : '—'}</td>
+            <td style="color:var(--text-muted);font-size:12px;">${v.date}</td>
+            <td>
+              <div class="table-actions">
+                <button class="btn-icon" title="Edit" onclick="showToast('Edit panel coming soon', 'info')">
+                  <svg data-feather="edit-2" width="13" height="13"></svg>
+                </button>
+                <a href="video.html" class="btn-icon" title="Preview">
+                  <svg data-feather="eye" width="13" height="13"></svg>
+                </a>
+                <button class="btn-icon" title="Delete" onclick="openDelete(${v.id})" style="border-color:rgba(255,45,85,0.2);color:var(--crimson);">
+                  <svg data-feather="trash-2" width="13" height="13"></svg>
+                </button>
+              </div>
+            </td>
+          </tr>
+        `).join('');
+        if (typeof feather !== 'undefined') feather.replace();
+      }
+      renderTable(tableVideos);
+
+      // ── Mobile card list ──
+      const mobileList = document.getElementById('mobile-video-list');
+      mobileList.innerHTML = videos.map(v => `
+        <div style="display:flex;gap:12px;padding:12px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;background:var(--bg-glass);">
+          <div class="${v.thumb}" style="width:64px;height:40px;border-radius:6px;display:grid;place-items:center;font-size:18px;flex-shrink:0;">${v.emoji}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:13px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${v.title}</div>
+            <div style="display:flex;gap:10px;margin-top:5px;font-size:11px;color:var(--text-muted);">
+              ${statusBadge(v.status)}
+              <span>${v.views} views</span>
+            </div>
+          </div>
+          <button onclick="openDelete(${v.id})" style="background:none;border:none;color:var(--crimson);cursor:pointer;padding:4px;">✕</button>
+        </div>
+      `).join('');
+
+      // ── Table search ──
+      document.getElementById('table-search').addEventListener('input', e => {
+        const q = e.target.value.toLowerCase();
+        const filtered = videos.filter(v => v.title.toLowerCase().includes(q));
+        renderTable(filtered);
+      });
+
+      // ── Delete modal ──
+      window.openDelete = (id) => {
+        pendingDeleteId = id;
+        const modal = document.getElementById('delete-modal');
+        modal.style.display = 'flex';
+        modal.style.animation = 'fadeIn 0.2s var(--ease)';
+      };
+      document.getElementById('cancel-delete').addEventListener('click', () => {
+        document.getElementById('delete-modal').style.display = 'none';
+        pendingDeleteId = null;
+      });
+      document.getElementById('confirm-delete').addEventListener('click', () => {
+        if (!pendingDeleteId) return;
+        const row = document.getElementById('row-' + pendingDeleteId);
+        if (row) { row.style.opacity = '0'; row.style.transform = 'translateX(-20px)'; row.style.transition = 'all 0.3s'; setTimeout(() => row.remove(), 300); }
+        document.getElementById('delete-modal').style.display = 'none';
+        showToast('🗑 Video deleted', 'error');
+        pendingDeleteId = null;
+      });
+      document.getElementById('delete-modal').addEventListener('click', e => {
+        if (e.target === e.currentTarget) { e.currentTarget.style.display = 'none'; pendingDeleteId = null; }
+      });
+
+      // ── Chart ──
+      const chartData7d  = [45, 72, 58, 90, 65, 110, 88];
+      const chartData30d = [40,55,60,48,75,82,70,65,90,95,80,70,60,75,88,92,85,78,95,100,88,75,82,90,105,98,88,92,110,115];
+      const chartData90d = Array.from({length: 30}, () => Math.floor(Math.random() * 80 + 40));
+
+      function renderChart(data) {
+        const area   = document.getElementById('chart-area');
+        const labels = document.getElementById('chart-labels');
+        const max    = Math.max(...data);
+        area.innerHTML = data.map(v => `
+          <div class="chart-bar" style="height:${(v / max * 100)}%;" title="${v}K views"></div>
+        `).join('');
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        if (data.length <= 7) {
+          labels.innerHTML = days.map(d => `<span>${d}</span>`).join('');
+        } else {
+          labels.innerHTML = '';
+        }
+      }
+      renderChart(chartData7d);
+
+      document.querySelectorAll('.chart-period').forEach(btn => {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.chart-period').forEach(b => b.classList.remove('active-period', 'btn-primary'));
+          this.classList.add('active-period', 'btn-primary');
+          const map = { '7d': chartData7d, '30d': chartData30d, '90d': chartData90d };
+          renderChart(map[this.dataset.period]);
+        });
+      });
+
+      // Style active period button
+      document.querySelector('.active-period').classList.add('btn-primary');
+      document.querySelectorAll('.chart-period:not(.active-period)').forEach(b => {
+        b.classList.remove('btn-primary');
+        b.classList.add('btn-ghost');
+      });
+
+      // ── Animate stat counters ──
+      document.querySelectorAll('.stat-card-value[data-count]').forEach(el => {
+        const target = parseInt(el.dataset.count);
+        const prefix = el.dataset.prefix || '';
+        let cur = 0;
+        const step = Math.max(1, Math.ceil(target / 40));
+        const t = setInterval(() => {
+          cur = Math.min(cur + step, target);
+          el.textContent = prefix + cur.toLocaleString();
+          if (cur >= target) clearInterval(t);
+        }, 40);
+      });
+
+      // ── Responsive: show mobile list on small screens ──
+      function checkMobile() {
+        const isMobile = window.innerWidth < 768;
+        document.querySelector('.data-table').style.display = isMobile ? 'none' : '';
+        mobileList.style.display = isMobile ? 'block' : 'none';
+      }
+      checkMobile();
+      window.addEventListener('resize', checkMobile);
+
+    });
+  </script>
+
+  <style>
+    .active-period { background: var(--neon) !important; color: #000 !important; }
+  </style>
+</body>
+</html>
