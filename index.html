@@ -3,169 +3,475 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VΞLTRIX — Stream the Future</title>
-  <link rel="stylesheet" href="style.css" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Syne:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <title>NOVA — The Future of Streaming</title>
+  <meta name="description" content="NOVA is the next-generation video streaming platform. Watch, upload, and discover cinematic content." />
+  <link rel="stylesheet" href="css/style.css" />
+  <!-- Feather Icons CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.1/feather.min.js" defer></script>
 </head>
 <body>
 
-  <!-- ░░ ANIMATED BACKGROUND ░░ -->
-  <div class="bg-grid"></div>
-  <div class="bg-orbs">
-    <span class="orb orb-1"></span>
-    <span class="orb orb-2"></span>
-    <span class="orb orb-3"></span>
+  <!-- Custom Cursor -->
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+
+  <!-- Noise overlay -->
+  <div class="noise"></div>
+
+  <!-- Particle canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Page Loader -->
+  <div id="page-loader">
+    <div class="loader-logo">NOVA</div>
+    <div class="loader-bar-wrap">
+      <div class="loader-bar"></div>
+    </div>
   </div>
 
-  <!-- ░░ HEADER ░░ -->
-  <header class="header">
-    <div class="header-inner">
-      <div class="logo">
-        <span class="logo-icon">▶</span>
-        <span class="logo-text">VΞL<em>TRIX</em></span>
+  <!-- Toast container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ── NAVIGATION ─────────────────────────────────────── -->
+  <nav class="nav" id="main-nav">
+    <a href="index.html" class="nav-logo">NOV<span>A</span></a>
+
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="index.html#gallery">Library</a></li>
+      <li><a href="video.html">Watch</a></li>
+      <li><a href="upload.html">Upload</a></li>
+      <li><a href="admin.html">Dashboard</a></li>
+    </ul>
+
+    <div class="nav-right">
+      <div class="nav-search">
+        <svg data-feather="search" width="15" height="15"></svg>
+        <input type="text" id="nav-search-input" placeholder="Search videos…" />
       </div>
+      <a href="upload.html" class="btn-nav-upload">
+        <svg data-feather="upload-cloud" width="15" height="15"></svg>
+        Upload
+      </a>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
 
-      <nav class="nav">
-        <a href="#" class="nav-link active">Home</a>
-        <a href="#gallery" class="nav-link">Library</a>
-        <a href="#" class="nav-link" id="navUploadBtn">Upload</a>
-      </nav>
+  <!-- Mobile Nav -->
+  <div class="mobile-nav" id="mobile-nav">
+    <div class="mobile-nav-backdrop" id="mobile-nav-backdrop"></div>
+    <div class="mobile-nav-drawer">
+      <button class="mobile-nav-close" id="mobile-nav-close">✕</button>
+      <a href="index.html" class="mobile-nav-link active">Home</a>
+      <a href="index.html#gallery" class="mobile-nav-link">Library</a>
+      <a href="video.html" class="mobile-nav-link">Watch</a>
+      <a href="upload.html" class="mobile-nav-link">Upload</a>
+      <a href="admin.html" class="mobile-nav-link">Dashboard</a>
+    </div>
+  </div>
 
-      <div class="header-actions">
-        <div class="search-wrap">
-          <span class="search-icon">⌕</span>
-          <input type="text" id="searchInput" class="search-input" placeholder="Search videos…" />
+  <!-- ── HERO ───────────────────────────────────────────── -->
+  <section class="hero section">
+    <div class="hero-bg">
+      <!-- Replace src with an actual video for clients -->
+      <div class="hero-gradient"></div>
+      <div class="hero-scanlines"></div>
+    </div>
+
+    <div class="hero-visual">
+      <div class="hero-mockup">
+        <div class="hero-mockup-inner">
+          <div class="hero-mockup-screen">
+            <div class="hero-mockup-bar">
+              <div class="mock-dot"></div>
+              <div class="mock-dot"></div>
+              <div class="mock-dot"></div>
+            </div>
+            <div class="hero-mockup-content">
+              <div class="mock-card"></div>
+              <div class="mock-card"></div>
+              <div class="mock-card"></div>
+              <div class="mock-card"></div>
+              <div class="mock-card"></div>
+              <div class="mock-card"></div>
+            </div>
+          </div>
         </div>
-        <button class="btn-upload" id="uploadTriggerBtn">
-          <span class="btn-plus">+</span> New Video
-        </button>
       </div>
     </div>
-  </header>
 
-  <!-- ░░ HERO ░░ -->
-  <section class="hero">
-    <div class="hero-badge">⚡ Now Streaming</div>
-    <h1 class="hero-title">
-      Stream the<br /><span class="gradient-text">Future.</span>
-    </h1>
-    <p class="hero-sub">Your personal cinematic universe — upload, curate, watch.</p>
-    <div class="hero-stats">
-      <div class="stat"><span id="statCount">0</span> <em>Videos</em></div>
-      <div class="stat-divider"></div>
-      <div class="stat"><span>HD</span> <em>Quality</em></div>
-      <div class="stat-divider"></div>
-      <div class="stat"><span>∞</span> <em>Storage</em></div>
+    <div class="container hero-content">
+      <div class="hero-eyebrow">
+        <div class="hero-eyebrow-dot"></div>
+        Next-Generation Streaming
+      </div>
+
+      <h1 class="hero-headline">
+        <span class="line-1">STREAM</span>
+        <span class="line-2">WITHOUT</span>
+        <span class="line-3">LIMITS</span>
+      </h1>
+
+      <p class="hero-sub">
+        A cinematic streaming experience built for the future.
+        Upload, curate, and watch with stunning visual quality.
+      </p>
+
+      <div class="hero-actions">
+        <a href="index.html#gallery" class="btn btn-primary">
+          <svg data-feather="play" width="16" height="16"></svg>
+          Start Watching
+        </a>
+        <a href="upload.html" class="btn btn-outline">
+          <svg data-feather="upload-cloud" width="16" height="16"></svg>
+          Upload Content
+        </a>
+      </div>
+
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <div class="hero-stat-value" data-count="2400">0</div>
+          <div class="hero-stat-label">Videos</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" data-count="180">0</div>
+          <div class="hero-stat-label">Creators</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" data-count="99">0</div>
+          <div class="hero-stat-label">% Uptime</div>
+        </div>
+        <div class="hero-stat">
+          <div class="hero-stat-value" data-count="4">0</div>
+          <div class="hero-stat-label">K Quality</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="scroll-indicator">
+      <div class="scroll-mouse">
+        <div class="scroll-wheel"></div>
+      </div>
+      <div class="scroll-label">Scroll</div>
     </div>
   </section>
 
-  <!-- ░░ GALLERY ░░ -->
-  <main class="gallery-section" id="gallery">
-    <div class="section-header">
-      <h2 class="section-title">All Videos</h2>
-      <span class="section-count" id="videoCount">0 videos</span>
+  <!-- ── FEATURES ───────────────────────────────────────── -->
+  <section class="features section" id="features">
+    <div class="container">
+      <div class="reveal">
+        <div class="section-label">Platform Features</div>
+        <h2 class="section-title">BUILT FOR <span class="accent">CREATORS</span></h2>
+        <p class="section-sub">Everything you need to stream, share, and grow your audience — in one platform.</p>
+      </div>
+
+      <div class="features-grid">
+
+        <div class="feature-card feature-card-large reveal reveal-delay-1">
+          <div>
+            <div class="feature-number">01</div>
+            <div class="feature-icon">
+              <svg data-feather="zap" width="22" height="22"></svg>
+            </div>
+            <div class="feature-title">INSTANT 4K STREAMING</div>
+            <p class="feature-desc">Adaptive bitrate technology ensures smooth playback at any connection speed. Your content in stunning 4K HDR with zero buffering.</p>
+            <span class="feature-tag">4K · HDR · 60fps</span>
+          </div>
+          <div class="feature-visual">
+            <div class="feature-visual-inner">⚡</div>
+          </div>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-number">02</div>
+          <div class="feature-icon">
+            <svg data-feather="shield" width="22" height="22"></svg>
+          </div>
+          <div class="feature-title">PRIVATE & SECURE</div>
+          <p class="feature-desc">End-to-end encryption and granular access control. Your content, your rules.</p>
+          <span class="feature-tag">Encrypted</span>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-1">
+          <div class="feature-number">03</div>
+          <div class="feature-icon">
+            <svg data-feather="cpu" width="22" height="22"></svg>
+          </div>
+          <div class="feature-title">AI POWERED</div>
+          <p class="feature-desc">Smart recommendations, auto-generated thumbnails, and intelligent search driven by AI.</p>
+          <span class="feature-tag">Machine Learning</span>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-2">
+          <div class="feature-number">04</div>
+          <div class="feature-icon">
+            <svg data-feather="globe" width="22" height="22"></svg>
+          </div>
+          <div class="feature-title">GLOBAL CDN</div>
+          <p class="feature-desc">Content delivered from 200+ edge nodes worldwide. Latency under 50ms regardless of location.</p>
+          <span class="feature-tag">200+ Nodes</span>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-3">
+          <div class="feature-number">05</div>
+          <div class="feature-icon">
+            <svg data-feather="bar-chart-2" width="22" height="22"></svg>
+          </div>
+          <div class="feature-title">DEEP ANALYTICS</div>
+          <p class="feature-desc">Real-time viewer insights, engagement metrics, and monetization analytics in your dashboard.</p>
+          <span class="feature-tag">Real-time</span>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-4">
+          <div class="feature-number">06</div>
+          <div class="feature-icon">
+            <svg data-feather="smartphone" width="22" height="22"></svg>
+          </div>
+          <div class="feature-title">ANY DEVICE</div>
+          <p class="feature-desc">Native apps for iOS, Android, Smart TV, and web. Seamless sync across all your devices.</p>
+          <span class="feature-tag">Cross-Platform</span>
+        </div>
+
+      </div>
     </div>
+  </section>
 
-    <!-- Empty state -->
-    <div class="empty-state" id="emptyState">
-      <div class="empty-icon">◈</div>
-      <h3>No videos yet</h3>
-      <p>Upload your first video to get started.</p>
-      <button class="btn-upload" onclick="document.getElementById('uploadTriggerBtn').click()">
-        + Upload Video
-      </button>
-    </div>
+  <!-- ── VIDEO GALLERY ─────────────────────────────────── -->
+  <section class="gallery section" id="gallery">
+    <div class="container">
 
-    <!-- Video grid -->
-    <div class="video-grid" id="videoGrid"></div>
-  </main>
-
-  <!-- ░░ VIDEO PLAYER MODAL ░░ -->
-  <div class="modal-overlay" id="playerModal">
-    <div class="player-modal">
-      <button class="modal-close" id="closePlayer">✕</button>
-      <div class="player-header">
-        <h3 class="player-title" id="playerTitle">Video Title</h3>
-      </div>
-      <div class="player-wrap">
-        <video id="videoPlayer" controls playsinline></video>
-      </div>
-      <div class="player-meta">
-        <span class="player-date" id="playerDate"></span>
-        <button class="btn-delete-video" id="deleteCurrentVideo">🗑 Delete Video</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ░░ PASSWORD MODAL ░░ -->
-  <div class="modal-overlay" id="passwordModal">
-    <div class="password-modal">
-      <button class="modal-close" id="closePassword">✕</button>
-      <div class="pw-icon">🔐</div>
-      <h3 class="pw-title">Owner Access</h3>
-      <p class="pw-sub">Enter the admin password to continue.</p>
-      <div class="pw-input-wrap">
-        <input type="password" id="passwordInput" class="pw-input" placeholder="Enter password…" />
-        <button class="btn-confirm" id="confirmPassword">Unlock</button>
-      </div>
-      <p class="pw-error" id="pwError"></p>
-    </div>
-  </div>
-
-  <!-- ░░ UPLOAD PANEL MODAL ░░ -->
-  <div class="modal-overlay" id="uploadModal">
-    <div class="upload-modal">
-      <button class="modal-close" id="closeUpload">✕</button>
-      <h3 class="upload-title">Upload Video</h3>
-
-      <!-- Drop zone -->
-      <div class="drop-zone" id="dropZone">
-        <div class="drop-icon">⬆</div>
-        <p class="drop-text">Drag & drop a video here</p>
-        <p class="drop-sub">or</p>
-        <label class="btn-file-label" for="videoFileInput">Browse File</label>
-        <input type="file" id="videoFileInput" accept="video/*" hidden />
-      </div>
-
-      <!-- Preview -->
-      <div class="upload-preview" id="uploadPreview" style="display:none;">
-        <video id="previewVideo" controls></video>
-        <div class="preview-info">
-          <span class="preview-filename" id="previewFilename"></span>
-          <span class="preview-size" id="previewSize"></span>
+      <div class="gallery-header reveal">
+        <div>
+          <div class="section-label">Content Library</div>
+          <h2 class="section-title">EXPLORE <span class="accent">CONTENT</span></h2>
+        </div>
+        <div class="filter-bar" id="filter-bar">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="featured">Featured</button>
+          <button class="filter-btn" data-filter="tech">Tech</button>
+          <button class="filter-btn" data-filter="design">Design</button>
+          <button class="filter-btn" data-filter="film">Film</button>
+          <button class="filter-btn" data-filter="music">Music</button>
         </div>
       </div>
 
-      <!-- Title input -->
-      <div class="form-group">
-        <label class="form-label">Video Title</label>
-        <input type="text" id="videoTitleInput" class="form-input" placeholder="Give your video a title…" />
-      </div>
+      <div class="video-grid" id="video-grid">
 
-      <!-- Thumbnail input -->
-      <div class="form-group">
-        <label class="form-label">Thumbnail (optional)</label>
-        <label class="btn-file-label small" for="thumbFileInput">Choose Image</label>
-        <input type="file" id="thumbFileInput" accept="image/*" hidden />
-        <span class="thumb-name" id="thumbName">No file chosen</span>
-      </div>
-
-      <!-- Upload progress -->
-      <div class="progress-wrap" id="progressWrap" style="display:none;">
-        <div class="progress-bar">
-          <div class="progress-fill" id="progressFill"></div>
+        <!-- Featured Card -->
+        <div class="video-card video-card-featured" data-filter="featured film" onclick="window.location='video.html'">
+          <div class="card-thumb thumb-1">
+            <div class="thumb-placeholder-icon">🎬</div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">▶</div>
+            </div>
+            <span class="card-quality">4K</span>
+            <span class="card-new">NEW</span>
+            <span class="card-duration">1:24:36</span>
+          </div>
+          <div class="card-body">
+            <div class="card-meta-top">
+              <span class="card-category">Film</span>
+              <span class="card-dot">•</span>
+              <span class="card-date">Mar 2026</span>
+            </div>
+            <div class="card-title">Into the Digital Horizon — A Cinematic Journey Through Future Cities</div>
+            <div class="card-footer">
+              <div class="card-views"><svg data-feather="eye" width="12" height="12"></svg> 1.2M views</div>
+              <div class="card-rating">★ 9.4</div>
+            </div>
+          </div>
         </div>
-        <span class="progress-label" id="progressLabel">Processing…</span>
+
+        <!-- Card 2 -->
+        <div class="video-card" data-filter="tech" onclick="window.location='video.html'">
+          <div class="card-thumb thumb-2">
+            <div class="thumb-placeholder-icon">🤖</div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">▶</div>
+            </div>
+            <span class="card-quality">HD</span>
+            <span class="card-duration">32:14</span>
+          </div>
+          <div class="card-body">
+            <div class="card-meta-top">
+              <span class="card-category">Tech</span>
+              <span class="card-dot">•</span>
+              <span class="card-date">Feb 2026</span>
+            </div>
+            <div class="card-title">AI Consciousness: The Next Frontier</div>
+            <div class="card-footer">
+              <div class="card-views"><svg data-feather="eye" width="12" height="12"></svg> 480K views</div>
+              <div class="card-rating">★ 8.7</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="video-card" data-filter="design" onclick="window.location='video.html'">
+          <div class="card-thumb thumb-3">
+            <div class="thumb-placeholder-icon">🎨</div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">▶</div>
+            </div>
+            <span class="card-quality">4K</span>
+            <span class="card-duration">18:55</span>
+          </div>
+          <div class="card-body">
+            <div class="card-meta-top">
+              <span class="card-category">Design</span>
+              <span class="card-dot">•</span>
+              <span class="card-date">Mar 2026</span>
+            </div>
+            <div class="card-title">Mastering Motion: Advanced UI Animation</div>
+            <div class="card-footer">
+              <div class="card-views"><svg data-feather="eye" width="12" height="12"></svg> 220K views</div>
+              <div class="card-rating">★ 9.1</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="video-card" data-filter="music" onclick="window.location='video.html'">
+          <div class="card-thumb thumb-4">
+            <div class="thumb-placeholder-icon">🎵</div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">▶</div>
+            </div>
+            <span class="card-quality">HD</span>
+            <span class="card-duration">44:20</span>
+          </div>
+          <div class="card-body">
+            <div class="card-meta-top">
+              <span class="card-category">Music</span>
+              <span class="card-dot">•</span>
+              <span class="card-date">Jan 2026</span>
+            </div>
+            <div class="card-title">Neon Frequencies — Live Synthwave Performance</div>
+            <div class="card-footer">
+              <div class="card-views"><svg data-feather="eye" width="12" height="12"></svg> 890K views</div>
+              <div class="card-rating">★ 9.8</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5 -->
+        <div class="video-card" data-filter="tech" onclick="window.location='video.html'">
+          <div class="card-thumb thumb-5">
+            <div class="thumb-placeholder-icon">🚀</div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">▶</div>
+            </div>
+            <span class="card-quality">4K</span>
+            <span class="card-duration">55:03</span>
+          </div>
+          <div class="card-body">
+            <div class="card-meta-top">
+              <span class="card-category">Tech</span>
+              <span class="card-dot">•</span>
+              <span class="card-date">Mar 2026</span>
+            </div>
+            <div class="card-title">Space Architecture: Building the Moon Base</div>
+            <div class="card-footer">
+              <div class="card-views"><svg data-feather="eye" width="12" height="12"></svg> 1.6M views</div>
+              <div class="card-rating">★ 9.5</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 6 -->
+        <div class="video-card" data-filter="film" onclick="window.location='video.html'">
+          <div class="card-thumb thumb-6">
+            <div class="thumb-placeholder-icon">🎭</div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">▶</div>
+            </div>
+            <span class="card-quality">HD</span>
+            <span class="card-duration">12:48</span>
+          </div>
+          <div class="card-body">
+            <div class="card-meta-top">
+              <span class="card-category">Film</span>
+              <span class="card-dot">•</span>
+              <span class="card-date">Feb 2026</span>
+            </div>
+            <div class="card-title">Short Film: The Last Signal from Station Zero</div>
+            <div class="card-footer">
+              <div class="card-views"><svg data-feather="eye" width="12" height="12"></svg> 340K views</div>
+              <div class="card-rating">★ 8.9</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 7 -->
+        <div class="video-card" data-filter="design" onclick="window.location='video.html'">
+          <div class="card-thumb thumb-1">
+            <div class="thumb-placeholder-icon">💡</div>
+            <div class="card-play-overlay">
+              <div class="card-play-btn">▶</div>
+            </div>
+            <span class="card-quality">HD</span>
+            <span class="card-duration">27:39</span>
+          </div>
+          <div class="card-body">
+            <div class="card-meta-top">
+              <span class="card-category">Design</span>
+              <span class="card-dot">•</span>
+              <span class="card-date">Jan 2026</span>
+            </div>
+            <div class="card-title">The Complete Guide to Glassmorphism Design</div>
+            <div class="card-footer">
+              <div class="card-views"><svg data-feather="eye" width="12" height="12"></svg> 510K views</div>
+              <div class="card-rating">★ 9.0</div>
+            </div>
+          </div>
+        </div>
+
       </div>
-
-      <button class="btn-submit" id="submitUpload">⬆ Upload to Library</button>
     </div>
-  </div>
+  </section>
 
-  <!-- ░░ TOAST NOTIFICATION ░░ -->
-  <div class="toast" id="toast"></div>
+  <!-- ── CTA BANNER ─────────────────────────────────────── -->
+  <section class="cta-banner section">
+    <div class="container">
+      <div class="cta-inner reveal">
+        <div class="section-label" style="justify-content:center">Start Today</div>
+        <h2 class="cta-title">READY TO <span class="accent">LAUNCH?</span></h2>
+        <p class="cta-sub">Join thousands of creators who chose NOVA as their streaming home. Free to start, powerful to scale.</p>
+        <div class="cta-actions">
+          <a href="upload.html" class="btn btn-primary">
+            <svg data-feather="upload-cloud" width="16" height="16"></svg>
+            Start Uploading Free
+          </a>
+          <a href="admin.html" class="btn btn-outline">
+            <svg data-feather="layout" width="16" height="16"></svg>
+            View Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
 
-  <script src="script.js"></script>
+  <!-- ── FOOTER ─────────────────────────────────────────── -->
+  <footer class="footer section">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">NOVA</div>
+        <ul class="footer-links">
+          <li><a href="#">About</a></li>
+          <li><a href="#">Pricing</a></li>
+          <li><a href="#">API</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+          <li><a href="#">Contact</a></li>
+        </ul>
+        <div class="footer-copy">© 2026 NOVA Template. All rights reserved.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
 </body>
 </html>
