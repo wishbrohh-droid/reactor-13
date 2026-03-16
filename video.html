@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Watch — Into the Digital Horizon | NOVA</title>
+  <link rel="stylesheet" href="css/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.1/feather.min.js" defer></script>
+</head>
+<body>
+
+  <div id="cursor-dot"></div>
+  <div id="cursor-ring"></div>
+  <div class="noise"></div>
+  <canvas id="particle-canvas"></canvas>
+
+  <div id="page-loader">
+    <div class="loader-logo">NOVA</div>
+    <div class="loader-bar-wrap"><div class="loader-bar"></div></div>
+  </div>
+
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ── NAV ──────────────────────────────────────────────── -->
+  <nav class="nav" id="main-nav">
+    <a href="index.html" class="nav-logo">NOV<span>A</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="index.html#gallery">Library</a></li>
+      <li><a href="video.html" class="active">Watch</a></li>
+      <li><a href="upload.html">Upload</a></li>
+      <li><a href="admin.html">Dashboard</a></li>
+    </ul>
+    <div class="nav-right">
+      <div class="nav-search">
+        <svg data-feather="search" width="15" height="15"></svg>
+        <input type="text" placeholder="Search videos…" />
+      </div>
+      <a href="upload.html" class="btn-nav-upload">
+        <svg data-feather="upload-cloud" width="15" height="15"></svg>
+        Upload
+      </a>
+      <button class="hamburger" id="hamburger"><span></span><span></span><span></span></button>
+    </div>
+  </nav>
+
+  <div class="mobile-nav" id="mobile-nav">
+    <div class="mobile-nav-backdrop" id="mobile-nav-backdrop"></div>
+    <div class="mobile-nav-drawer">
+      <button class="mobile-nav-close" id="mobile-nav-close">✕</button>
+      <a href="index.html" class="mobile-nav-link">Home</a>
+      <a href="index.html#gallery" class="mobile-nav-link">Library</a>
+      <a href="video.html" class="mobile-nav-link active">Watch</a>
+      <a href="upload.html" class="mobile-nav-link">Upload</a>
+      <a href="admin.html" class="mobile-nav-link">Dashboard</a>
+    </div>
+  </div>
+
+  <!-- ── PLAYER PAGE ──────────────────────────────────────── -->
+  <div class="player-page section">
+    <div class="container">
+      <!-- Breadcrumb -->
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:20px;font-size:13px;color:var(--text-muted);">
+        <a href="index.html" style="color:var(--neon)">Home</a>
+        <svg data-feather="chevron-right" width="13" height="13"></svg>
+        <a href="index.html#gallery" style="color:var(--text-muted)">Library</a>
+        <svg data-feather="chevron-right" width="13" height="13"></svg>
+        <span>Into the Digital Horizon</span>
+      </div>
+
+      <div class="player-layout">
+
+        <!-- ── Main Player Column ── -->
+        <div class="player-main">
+
+          <!-- Video Player -->
+          <div class="player-wrap" id="player-wrap">
+            <div class="player-placeholder" id="player-placeholder">
+              <div class="player-placeholder-icon" id="play-main-btn" title="Play video">▶</div>
+              <div class="player-placeholder-text">Connect your video source to play</div>
+            </div>
+            <!-- Actual video element — set src via JS or directly -->
+            <video id="main-video" style="display:none;" controls></video>
+          </div>
+
+          <!-- Video Info -->
+          <div class="player-info animate-fade-in">
+            <div class="player-category">Film · Documentary</div>
+            <h1 class="player-title">Into the Digital Horizon — A Cinematic Journey</h1>
+
+            <div class="player-meta-row">
+              <div class="player-meta-item">
+                <svg data-feather="eye" width="14" height="14"></svg>
+                1.2M views
+              </div>
+              <div class="player-meta-item">
+                <svg data-feather="calendar" width="14" height="14"></svg>
+                March 10, 2026
+              </div>
+              <div class="player-meta-item">
+                <svg data-feather="clock" width="14" height="14"></svg>
+                1h 24m 36s
+              </div>
+              <div class="player-meta-item">
+                <svg data-feather="star" width="14" height="14"></svg>
+                9.4 / 10
+              </div>
+              <div class="player-meta-item" style="margin-left:auto;">
+                <span style="background:var(--neon-dim);border:1px solid rgba(0,229,255,0.3);color:var(--neon);padding:3px 10px;border-radius:6px;font-size:11px;font-weight:700;">4K HDR</span>
+              </div>
+            </div>
+
+            <div class="player-actions">
+              <button class="btn btn-primary btn-sm" id="like-btn">
+                <svg data-feather="heart" width="14" height="14"></svg>
+                <span id="like-count">24.6K</span>
+              </button>
+              <button class="btn btn-ghost btn-sm" id="save-btn">
+                <svg data-feather="bookmark" width="14" height="14"></svg>
+                Save
+              </button>
+              <button class="btn btn-ghost btn-sm" id="share-btn">
+                <svg data-feather="share-2" width="14" height="14"></svg>
+                Share
+              </button>
+              <button class="btn btn-ghost btn-sm">
+                <svg data-feather="download" width="14" height="14"></svg>
+                Download
+              </button>
+              <button class="btn btn-ghost btn-sm">
+                <svg data-feather="flag" width="14" height="14"></svg>
+                Report
+              </button>
+            </div>
+
+            <div class="player-desc">
+              <strong style="color:var(--text);">About this video</strong><br><br>
+              An immersive cinematic journey through the megacities of the near future. This feature-length documentary explores how architecture, technology, and human culture are merging into something entirely unprecedented.
+              <br><br>
+              Shot across 12 cities on 4 continents in stunning 8K resolution, this film presents a vision of 2075 that is at once terrifying and breathtakingly beautiful.
+              <br><br>
+              <span style="color:var(--text-dim);font-size:13px;">Tags: documentary, future, cities, technology, architecture, 4K, cinematic</span>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ── Sidebar ── -->
+        <aside>
+          <div class="sidebar-title">Up Next</div>
+
+          <!-- Sidebar Videos -->
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-2">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🤖</div>
+              <div class="sidebar-thumb-duration">32:14</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">AI Consciousness: The Next Frontier</div>
+              <div class="sidebar-video-meta">480K views · Feb 2026</div>
+            </div>
+          </div>
+
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-3">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🎨</div>
+              <div class="sidebar-thumb-duration">18:55</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">Mastering Motion: Advanced UI Animation</div>
+              <div class="sidebar-video-meta">220K views · Mar 2026</div>
+            </div>
+          </div>
+
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-4">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🎵</div>
+              <div class="sidebar-thumb-duration">44:20</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">Neon Frequencies — Live Synthwave Performance</div>
+              <div class="sidebar-video-meta">890K views · Jan 2026</div>
+            </div>
+          </div>
+
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-5">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🚀</div>
+              <div class="sidebar-thumb-duration">55:03</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">Space Architecture: Building the Moon Base</div>
+              <div class="sidebar-video-meta">1.6M views · Mar 2026</div>
+            </div>
+          </div>
+
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-6">
+              <div class="thumb-placeholder-icon" style="font-size:18px">🎭</div>
+              <div class="sidebar-thumb-duration">12:48</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">Short Film: The Last Signal from Station Zero</div>
+              <div class="sidebar-video-meta">340K views · Feb 2026</div>
+            </div>
+          </div>
+
+          <div class="sidebar-video" onclick="window.location='video.html'">
+            <div class="sidebar-thumb thumb-1">
+              <div class="thumb-placeholder-icon" style="font-size:18px">💡</div>
+              <div class="sidebar-thumb-duration">27:39</div>
+            </div>
+            <div class="sidebar-info">
+              <div class="sidebar-video-title">The Complete Guide to Glassmorphism Design</div>
+              <div class="sidebar-video-meta">510K views · Jan 2026</div>
+            </div>
+          </div>
+
+        </aside>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer section">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">NOVA</div>
+        <ul class="footer-links">
+          <li><a href="#">About</a></li>
+          <li><a href="#">Privacy</a></li>
+          <li><a href="#">Terms</a></li>
+        </ul>
+        <div class="footer-copy">© 2026 NOVA Template.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/script.js"></script>
+  <script>
+    // ── Player page specific interactions ──
+    document.addEventListener('DOMContentLoaded', () => {
+      const placeholder = document.getElementById('player-placeholder');
+      const video       = document.getElementById('main-video');
+      const playBtn     = document.getElementById('play-main-btn');
+      const likeBtn     = document.getElementById('like-btn');
+      const likeCount   = document.getElementById('like-count');
+      const saveBtn     = document.getElementById('save-btn');
+      const shareBtn    = document.getElementById('share-btn');
+
+      let liked = false;
+      let saved = false;
+
+      // Play button click — shows video or prompts to add source
+      playBtn.addEventListener('click', () => {
+        // If a real video src is set on #main-video, show it
+        if (video.src && video.src !== window.location.href) {
+          placeholder.style.display = 'none';
+          video.style.display = 'block';
+          video.play();
+        } else {
+          showToast('Connect a video source to play. Set the src attribute on #main-video.', 'info');
+        }
+      });
+
+      // Like toggle
+      likeBtn.addEventListener('click', () => {
+        liked = !liked;
+        likeBtn.style.background = liked ? 'var(--crimson)' : '';
+        likeBtn.style.color      = liked ? '#fff' : '';
+        likeCount.textContent    = liked ? '24.7K' : '24.6K';
+        showToast(liked ? '❤️ Added to your liked videos' : 'Removed from liked', liked ? 'success' : 'info');
+      });
+
+      // Save toggle
+      saveBtn.addEventListener('click', () => {
+        saved = !saved;
+        saveBtn.style.color = saved ? 'var(--neon)' : '';
+        showToast(saved ? '🔖 Saved to your library' : 'Removed from library', 'success');
+      });
+
+      // Share
+      shareBtn.addEventListener('click', () => {
+        if (navigator.share) {
+          navigator.share({ title: 'NOVA — Into the Digital Horizon', url: window.location.href });
+        } else {
+          navigator.clipboard.writeText(window.location.href).then(() => {
+            showToast('🔗 Link copied to clipboard!', 'success');
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>
