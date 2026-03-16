@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Admin Dashboard | NOVA</title>
   <link rel="stylesheet" href="css/style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.1/feather.min.js" defer></script>
+  <!-- Feather Icons: NO defer -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.1/feather.min.js"></script>
 </head>
 <body>
 
@@ -95,7 +96,7 @@
           <div style="width:34px;height:34px;background:var(--neon-dim);border:1px solid rgba(0,229,255,0.3);border-radius:50%;display:grid;place-items:center;font-size:14px;color:var(--neon);">A</div>
           <div>
             <div style="font-size:13px;font-weight:500;color:var(--text);">Admin</div>
-            <div style="font-size:11px;color:var(--text-muted);">admin@nova.tv</div>
+            <div style="font-size:11px;color:var(--text-muted);"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2d4c494044436d43425b4c03595b">[email&#160;protected]</a></div>
           </div>
         </div>
       </div>
@@ -280,7 +281,7 @@
     </div>
   </div>
 
-  <script src="js/script.js"></script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="js/script.js"></script>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
 
@@ -445,15 +446,3 @@
         const isMobile = window.innerWidth < 768;
         document.querySelector('.data-table').style.display = isMobile ? 'none' : '';
         mobileList.style.display = isMobile ? 'block' : 'none';
-      }
-      checkMobile();
-      window.addEventListener('resize', checkMobile);
-
-    });
-  </script>
-
-  <style>
-    .active-period { background: var(--neon) !important; color: #000 !important; }
-  </style>
-</body>
-</html>
